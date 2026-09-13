@@ -32,6 +32,7 @@ app.get("/api/health", (req: Request, res: Response) => {
   });
 });
 
+// Global Error Handling
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   if (err instanceof ZodError) {
     return res.status(400).json({
@@ -41,6 +42,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     });
   }
 
+  // Prisma Code Error
   if (err.code === "P2002") {
     return res.status(409).json({
       success: false,
@@ -48,7 +50,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     });
   }
 
-  // Tangani data tidak ditemukan pada Prisma
+  // Prisma Code Error
   if (err.code === "P2025") {
     return res.status(404).json({
       success: false,

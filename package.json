@@ -1,0 +1,15 @@
+{
+  "scripts": {
+    "prepare": "husky",
+    "test": "echo \"No test specified\" && exit 0"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^17.5.1"
+  },
+  "lint-staged": {
+    "doki-backend/**/*.ts": [
+      "bash -c 'npm run build --prefix doki-backend'"
+    ]
+  }
+}
