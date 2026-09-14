@@ -8,6 +8,7 @@ import cors, { CorsOptions } from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import { ZodError } from "zod";
+import GlobalErrorHandling from "./middleware/error.middleware";
 
 dotenv.config();
 
@@ -33,36 +34,7 @@ app.get("/api/health", (req: Request, res: Response) => {
 });
 
 // Global Error Handling
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  if (err instanceof ZodError) {
-    return res.status(400).json({
-      status: false,
-      message: "Validation Error",
-      err: err.message,
-    });
-  }
-
-  // Prisma Code Error
-  if (err.code === "P2002") {
-    return res.status(409).json({
-      success: false,
-      message: "Resource with unique field already exists",
-    });
-  }
-
-  // Prisma Code Error
-  if (err.code === "P2025") {
-    return res.status(404).json({
-      success: false,
-      message: "Record not found",
-    });
-  }
-
-  return res.status(500).json({
-    status: false,
-    message: "Internal Server Error",
-  });
-});
+app.use(GlobalErrorHandling);
 
 app.listen(port, () => {
   console.log(`Dōki server listening on port ${port}`);
