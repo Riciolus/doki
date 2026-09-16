@@ -9,6 +9,7 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import { ZodError } from "zod";
 import GlobalErrorHandling from "./middleware/error.middleware";
+import authRouter from "./routes/auth.route";
 
 dotenv.config();
 
@@ -32,6 +33,8 @@ app.get("/api/health", (req: Request, res: Response) => {
     message: "Dōki backend server is running",
   });
 });
+
+app.use("/api/auth", authRouter);
 
 // Global Error Handling
 app.use(GlobalErrorHandling);
