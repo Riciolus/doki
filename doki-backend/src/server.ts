@@ -1,15 +1,10 @@
-import express, {
-  type Express,
-  type Request,
-  type Response,
-  type NextFunction,
-} from "express";
+import express, { type Express, type Request, type Response } from "express";
 import cors, { CorsOptions } from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
-import { ZodError } from "zod";
 import GlobalErrorHandling from "./middleware/error.middleware";
 import authRouter from "./routes/auth.route";
+import { requestLogger } from "./middleware/requestLogger.middleware";
 
 dotenv.config();
 
@@ -25,6 +20,8 @@ const corsOptions: CorsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
+
+app.use(requestLogger);
 
 // Health Check
 app.get("/api/health", (req: Request, res: Response) => {

@@ -8,7 +8,24 @@ export default function GlobalErrorHandling(
   res: Response,
   next: NextFunction,
 ) {
-  console.error("🔥 Global Error Caught:", err);
+  const isProd = process.env.NODE_ENV === "production";
+  const errName = err.name || "Error";
+  const errMsg = err.message || "Unknown error occurred";
+
+  // Format satu baris clean
+  console.error(
+    `\x1b[31m[ERROR]\x1b[0m ${req.method} ${req.originalUrl} -> ${errName}: ${errMsg}`,
+  );
+
+  // Stack trace hanya ditampilkan saat dev dan dipangkas tipis
+  if (!isProd && err.stack) {
+    const stackSnippet = err.stack
+      .split("\n")
+      .slice(1, 3)
+      .map((line: string) => `        ${line.trim()}`)
+      .join("\n");
+    console.error(`\x1b[90m${stackSnippet}\x1b[0m`);
+  }
 
   if (err instanceof ZodError) {
     return res.status(400).json({
