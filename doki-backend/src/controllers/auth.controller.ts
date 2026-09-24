@@ -5,7 +5,11 @@ import {
   refreshSession,
   registerUser,
 } from "../services/auth.service";
-import { setAccessTokenCookie, setAuthCookies } from "../lib/token";
+import {
+  clearAuthCookies,
+  setAccessTokenCookie,
+  setAuthCookies,
+} from "../lib/token";
 import { AppError } from "../lib/error";
 
 export async function handleRegister(
@@ -55,7 +59,6 @@ export async function handleRefreshSession(
 ) {
   try {
     const refreshToken = req.cookies.jwt_refresh;
-
     if (!refreshToken) throw new AppError("Unauthorized", 401);
 
     const accessToken = await refreshSession(refreshToken);
@@ -65,6 +68,23 @@ export async function handleRefreshSession(
     res.status(200).json({
       success: true,
       message: "Token refreshed successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function handleLogout(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    clearAuthCookies(res);
+
+    res.status(200).json({
+      success: true,
+      message: "Logged out successfully",
     });
   } catch (error) {
     next(error);

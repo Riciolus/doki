@@ -3,6 +3,7 @@ import { prisma } from "../lib/prisma";
 import {
   generateAccessToken,
   generateRefreshToken,
+  verifyAccessToken,
   verifyRefreshToken,
 } from "../lib/token";
 import { RegisterInput, LoginInput } from "../schemas/auth.schema";
@@ -64,6 +65,10 @@ export async function loginUser(data: LoginInput) {
       userId: user.id,
       expiresAt,
     },
+  });
+
+  await prisma.refreshToken.deleteMany({
+    where: { userId: user.id, expiresAt: { lt: new Date() } },
   });
 
   const { password_hash, ...safeUser } = user;
