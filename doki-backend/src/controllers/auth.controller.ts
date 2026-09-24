@@ -1,7 +1,12 @@
 import { NextFunction, type Request, type Response } from "express";
 import { loginSchema, registerSchema } from "../schemas/auth.schema";
-import { loginUser, registerUser } from "../services/auth.service";
-import { setAuthCookies } from "../lib/token";
+import {
+  loginUser,
+  refreshSession,
+  registerUser,
+} from "../services/auth.service";
+import { setAccessTokenCookie, setAuthCookies } from "../lib/token";
+import { AppError } from "../lib/error";
 
 export async function handleRegister(
   req: Request,
@@ -37,6 +42,29 @@ export async function handleLogin(
     res.status(200).json({
       success: true,
       data: userData.user,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function handleRefreshSession(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const refreshToken = req.cookies.jwt_refresh;
+
+    if (!refreshToken) throw new AppError("Unauthorized", 401);
+
+    const accessToken = await refreshSession(refreshToken);
+
+    setAccessTokenCookie(res, accessToken);
+
+    res.status(200).json({
+      success: true,
+      message: "Token refreshed successfully",
     });
   } catch (error) {
     next(error);
