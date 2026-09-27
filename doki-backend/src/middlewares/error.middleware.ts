@@ -31,7 +31,7 @@ export default function GlobalErrorHandling(
     return res.status(400).json({
       success: false,
       message: "Validation Error",
-      err: err.issues,
+      err: err.issues.map((issue) => issue.message),
     });
   }
 

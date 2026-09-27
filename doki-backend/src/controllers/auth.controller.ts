@@ -1,4 +1,4 @@
-import { NextFunction, type Request, type Response } from "express";
+import { type NextFunction, type Request, type Response } from "express";
 import { loginSchema, registerSchema } from "../schemas/auth.schema";
 import {
   getUserDetail,

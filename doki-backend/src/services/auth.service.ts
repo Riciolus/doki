@@ -3,7 +3,6 @@ import { prisma } from "../lib/prisma";
 import {
   generateAccessToken,
   generateRefreshToken,
-  verifyAccessToken,
   verifyRefreshToken,
 } from "../lib/token";
 import { RegisterInput, LoginInput } from "../schemas/auth.schema";

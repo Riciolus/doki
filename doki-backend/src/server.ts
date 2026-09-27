@@ -4,6 +4,8 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import GlobalErrorHandling from "./middlewares/error.middleware";
 import authRouter from "./routes/auth.route";
+import workspaceRouter from "./routes/workspace.route";
+
 import { requestLogger } from "./middlewares/requestLogger.middleware";
 
 dotenv.config();
@@ -32,6 +34,7 @@ app.get("/api/health", (req: Request, res: Response) => {
 });
 
 app.use("/api/auth", authRouter);
+app.use("/api/workspaces", workspaceRouter);
 
 // Global Error Handling
 app.use(GlobalErrorHandling);
