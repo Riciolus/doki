@@ -108,3 +108,19 @@ export async function refreshSession(refreshToken: string) {
 
   return newAccessToken;
 }
+
+export async function getUserDetail(userId: string, email: string) {
+  return prisma.user.findFirst({
+    where: {
+      id: userId,
+      email,
+    },
+
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      createdAt: true,
+    },
+  });
+}

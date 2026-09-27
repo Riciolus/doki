@@ -1,16 +1,19 @@
 import { NextFunction, type Request, type Response } from "express";
 import { loginSchema, registerSchema } from "../schemas/auth.schema";
 import {
+  getUserDetail,
   loginUser,
   refreshSession,
   registerUser,
 } from "../services/auth.service";
 import {
+  AccessTokenPayload,
   clearAuthCookies,
   setAccessTokenCookie,
   setAuthCookies,
 } from "../lib/token";
 import { AppError } from "../lib/error";
+import { AuthenticatedRequest } from "../middleware/auth.middleware";
 
 export async function handleRegister(
   req: Request,
@@ -85,6 +88,25 @@ export async function handleLogout(
     res.status(200).json({
       success: true,
       message: "Logged out successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function handleGetMe(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const { userId, email } = req.user as AccessTokenPayload;
+
+    const data = await getUserDetail(userId, email);
+
+    res.status(200).json({
+      success: true,
+      data,
     });
   } catch (error) {
     next(error);
