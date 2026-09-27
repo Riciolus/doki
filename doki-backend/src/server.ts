@@ -2,9 +2,9 @@ import express, { type Express, type Request, type Response } from "express";
 import cors, { CorsOptions } from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
-import GlobalErrorHandling from "./middleware/error.middleware";
+import GlobalErrorHandling from "./middlewares/error.middleware";
 import authRouter from "./routes/auth.route";
-import { requestLogger } from "./middleware/requestLogger.middleware";
+import { requestLogger } from "./middlewares/requestLogger.middleware";
 
 dotenv.config();
 

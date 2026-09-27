@@ -6,7 +6,7 @@ import {
   handleRefreshSession,
   handleRegister,
 } from "../controllers/auth.controller";
-import { authenticate } from "../middleware/auth.middleware";
+import { authenticate } from "../middlewares/auth.middleware";
 
 const router = Router();
 

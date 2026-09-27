@@ -13,7 +13,6 @@ import {
   setAuthCookies,
 } from "../lib/token";
 import { AppError } from "../lib/error";
-import { AuthenticatedRequest } from "../middleware/auth.middleware";
 
 export async function handleRegister(
   req: Request,
