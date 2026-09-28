@@ -1,9 +1,11 @@
 import { Router } from "express";
 import {
+  handleCreateInvitation,
   handleCreateWorkspace,
   handleDeleteWorkspace,
   handleGetWorkspaceById,
   handleGetWorkspaces,
+  handleJoinWorkspace,
   handleUpdateWorkspace,
 } from "../controllers/workspace.controller";
 import { authenticate } from "../middlewares/auth.middleware";
@@ -38,5 +40,13 @@ router.post(
   authorizeWorkspaceRole([Role.OWNER, Role.EDITOR]),
   handleCreateBoard,
 );
+
+router.post(
+  "/:workspaceId/invitations",
+  authorizeWorkspaceRole([Role.OWNER, Role.EDITOR]),
+  handleCreateInvitation,
+);
+
+router.post("/join", authenticate, handleJoinWorkspace);
 
 export default router;

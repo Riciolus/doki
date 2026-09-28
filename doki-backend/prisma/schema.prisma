@@ -63,8 +63,8 @@ model WorkspaceMember {
 model WorkspaceInvitation {
   id          String    @id @default(uuid())
   workspaceId String
-  email       String
-  token       String    @unique
+  email       String?
+  token       String    @unique @default(uuid())
   role        Role      @default(VIEWER)
   expiresAt   DateTime
   createdAt   DateTime  @default(now())

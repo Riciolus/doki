@@ -30,3 +30,15 @@ export const workspaceIdParamSchema = z.object({
 
 export type CreateWorkspaceInput = z.infer<typeof createWorkspaceSchema>;
 export type UpdateWorkspaceInput = z.infer<typeof updateWorkspaceSchema>;
+
+export const createInvitationSchema = z.object({
+  email: z.string().email("Invalid email format").optional(), // Opsional!
+  role: z.enum(["OWNER", "EDITOR", "VIEWER"]).default("VIEWER"),
+});
+
+export const joinWorkspaceSchema = z.object({
+  token: z.string().uuid("Invalid invitation token format"),
+});
+
+export type CreateInvitationInput = z.infer<typeof createInvitationSchema>;
+export type JoinWorkspaceInput = z.infer<typeof joinWorkspaceSchema>;

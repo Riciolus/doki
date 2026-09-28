@@ -1,5 +1,9 @@
+import { Role } from "../../generated/prisma/enums";
 import { prisma } from "../lib/prisma";
-import { UpdateWorkspaceInput } from "../schemas/workspace.schema";
+import {
+  CreateInvitationInput,
+  UpdateWorkspaceInput,
+} from "../schemas/workspace.schema";
 
 export async function createWorkspace(name: string, ownerId: string) {
   return await prisma.$transaction(async (tx) => {
@@ -82,6 +86,20 @@ export async function getUserWorkspaceById(workspaceId: string) {
   });
 }
 
+export async function getUserWorkspaceByEmail(
+  workspaceId: string,
+  email: string,
+) {
+  return await prisma.workspaceMember.findFirst({
+    where: {
+      workspaceId,
+      user: {
+        email,
+      },
+    },
+  });
+}
+
 export async function updateWorkspace(
   payload: UpdateWorkspaceInput,
   workspaceId: string,
@@ -100,5 +118,62 @@ export async function deleteWorkspace(workspaceId: string) {
     where: {
       id: workspaceId,
     },
+  });
+}
+
+export async function createInvitation(
+  payload: CreateInvitationInput,
+  workspaceId: string,
+) {
+  const expiresAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+
+  return await prisma.workspaceInvitation.create({
+    data: {
+      email: payload.email,
+      role: payload.role,
+      workspaceId,
+      expiresAt,
+    },
+
+    select: {
+      id: true,
+      token: true,
+      email: true,
+      role: true,
+      expiresAt: true,
+    },
+  });
+}
+
+export async function getInvitationByToken(token: string) {
+  return await prisma.workspaceInvitation.findUnique({
+    where: {
+      token,
+    },
+  });
+}
+
+export async function joinWorkspaceAndInvalidateToken(
+  userId: string,
+  workspaceId: string,
+  role: Role,
+  invitationId: string,
+) {
+  return await prisma.$transaction(async (tx) => {
+    const newMember = await tx.workspaceMember.create({
+      data: {
+        userId,
+        workspaceId,
+        role,
+      },
+    });
+
+    await tx.workspaceInvitation.delete({
+      where: {
+        id: invitationId,
+      },
+    });
+
+    return newMember;
   });
 }

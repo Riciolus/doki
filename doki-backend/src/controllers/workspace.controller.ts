@@ -1,15 +1,21 @@
 import { type NextFunction, type Request, type Response } from "express";
 import {
+  createInvitationSchema,
   createWorkspaceSchema,
+  joinWorkspaceSchema,
   updateWorkspaceSchema,
   workspaceIdParamSchema,
 } from "../schemas/workspace.schema";
 import { AccessTokenPayload } from "../lib/token";
 import {
+  createInvitation,
   createWorkspace,
   deleteWorkspace,
+  getInvitationByToken,
+  getUserWorkspaceByEmail,
   getUserWorkspaceById,
   getUserWorkspaces,
+  joinWorkspaceAndInvalidateToken,
   updateWorkspace,
 } from "../services/workspace.service";
 import { AppError } from "../lib/error";
@@ -112,6 +118,89 @@ export async function handleDeleteWorkspace(
     res.status(200).json({
       success: true,
       message: "Successfully delete workspace",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function handleCreateInvitation(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const payload = createInvitationSchema.parse(req.body);
+    const { workspaceId } = workspaceIdParamSchema.parse(req.params);
+
+    if (payload.email) {
+      const existingUser = await getUserWorkspaceByEmail(
+        workspaceId,
+        payload.email,
+      );
+
+      if (existingUser) {
+        throw new AppError(
+          "User with this email is already a member of this workspace",
+          400,
+        );
+      }
+    }
+
+    const invitation = await createInvitation(payload, workspaceId);
+
+    res.status(201).json({
+      success: true,
+      data: invitation,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function handleJoinWorkspace(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const { token } = joinWorkspaceSchema.parse(req.body);
+    const { userId, email } = req.user as AccessTokenPayload;
+
+    const invitation = await getInvitationByToken(token);
+
+    if (!invitation) {
+      throw new AppError("Invitation not found", 404);
+    }
+
+    if (invitation.email && invitation.email !== email) {
+      throw new AppError("Unauthorized", 403);
+    }
+
+    if (invitation.expiresAt < new Date()) {
+      throw new AppError("Invitation expired", 400);
+    }
+
+    const isMember = await getUserWorkspaceByEmail(
+      invitation.workspaceId,
+      email,
+    );
+
+    if (isMember) {
+      throw new AppError("You are already a member of this workspace", 400);
+    }
+
+    const newMember = await joinWorkspaceAndInvalidateToken(
+      userId,
+      invitation.workspaceId,
+      invitation.role,
+      invitation.id,
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Successfully joined the workspace",
+      data: newMember,
     });
   } catch (error) {
     next(error);
