@@ -59,7 +59,7 @@ export async function handleGetWorkspaceById(
   next: NextFunction,
 ) {
   try {
-    const workspaceId = req.params.workspaceId as string;
+    const { workspaceId } = workspaceIdParamSchema.parse(req.params);
 
     if (!workspaceId) {
       throw new AppError("Workspace ID is required", 400);

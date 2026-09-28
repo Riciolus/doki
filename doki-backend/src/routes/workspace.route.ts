@@ -9,6 +9,7 @@ import {
 import { authenticate } from "../middlewares/auth.middleware";
 import { authorizeWorkspaceRole } from "../middlewares/rbac.middleware";
 import { Role } from "../../generated/prisma/enums";
+import { handleCreateBoard } from "../controllers/board.controller";
 
 const router = Router();
 
@@ -27,9 +28,15 @@ router.patch(
   handleUpdateWorkspace,
 );
 router.delete(
-  ":workspaceId",
+  "/:workspaceId",
   authorizeWorkspaceRole([Role.OWNER]),
   handleDeleteWorkspace,
+);
+
+router.post(
+  "/:workspaceId/boards",
+  authorizeWorkspaceRole([Role.OWNER, Role.EDITOR]),
+  handleCreateBoard,
 );
 
 export default router;

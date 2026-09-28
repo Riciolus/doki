@@ -3,6 +3,8 @@ import { AppError } from "../lib/error";
 import { Role } from "../../generated/prisma/enums";
 import { prisma } from "../lib/prisma";
 import { AccessTokenPayload } from "../lib/token";
+import { workspaceIdParamSchema } from "../schemas/workspace.schema";
+import { boardIdParamSchema } from "../schemas/board.schema";
 
 export function authorizeWorkspaceRole(allowedRoles: Role[]) {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -13,10 +15,14 @@ export function authorizeWorkspaceRole(allowedRoles: Role[]) {
         throw new AppError("Unauthorized", 401);
       }
 
-      const workspaceId = req.params.workspaceId as string;
+      const { workspaceId } = workspaceIdParamSchema.parse(req.params);
 
-      if (!workspaceId) {
-        throw new AppError("Workspace ID is required", 400);
+      const workspace = await prisma.workspace.findUnique({
+        where: { id: workspaceId },
+      });
+
+      if (!workspace) {
+        throw new AppError("Workspace not found", 404);
       }
 
       const member = await prisma.workspaceMember.findFirst({
@@ -53,7 +59,7 @@ export function authorizeBoardRole(allowedRoles: Role[]) {
         throw new AppError("Unauthorized", 401);
       }
 
-      const boardId = req.params.boardId as string;
+      const { boardId } = boardIdParamSchema.parse(req.params);
 
       if (!boardId) {
         throw new AppError("Board ID is required", 400);
