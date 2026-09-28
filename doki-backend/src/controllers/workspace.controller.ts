@@ -3,8 +3,10 @@ import {
   createInvitationSchema,
   createWorkspaceSchema,
   joinWorkspaceSchema,
+  updateMemberRoleSchema,
   updateWorkspaceSchema,
   workspaceIdParamSchema,
+  workspaceMemberParamSchema,
 } from "../schemas/workspace.schema";
 import { AccessTokenPayload } from "../lib/token";
 import {
@@ -15,8 +17,11 @@ import {
   getUserWorkspaceByEmail,
   getUserWorkspaceById,
   getUserWorkspaces,
+  getWorkspaceMembers,
   joinWorkspaceAndInvalidateToken,
+  removeWorkspaceMember,
   updateWorkspace,
+  updateWorkspaceMemberRole,
 } from "../services/workspace.service";
 import { AppError } from "../lib/error";
 
@@ -117,7 +122,7 @@ export async function handleDeleteWorkspace(
 
     res.status(200).json({
       success: true,
-      message: "Successfully delete workspace",
+      message: "Successfully deleted workspace",
     });
   } catch (error) {
     next(error);
@@ -201,6 +206,81 @@ export async function handleJoinWorkspace(
       success: true,
       message: "Successfully joined the workspace",
       data: newMember,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function handleGetWorkspaceMembers(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const { workspaceId } = workspaceIdParamSchema.parse(req.params);
+    const members = await getWorkspaceMembers(workspaceId);
+
+    res.json({
+      success: true,
+      data: members,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function handleUpdateMemberRole(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const { workspaceId, userId } = workspaceMemberParamSchema.parse(
+      req.params,
+    );
+    const payload = updateMemberRoleSchema.parse(req.body);
+
+    const currentUser = req.user as AccessTokenPayload;
+
+    if (currentUser.userId === userId && payload.role !== "OWNER") {
+      throw new AppError("You cannot downgrade your own role", 400);
+    }
+    const updatedMemberRole = await updateWorkspaceMemberRole(
+      workspaceId,
+      userId,
+      payload,
+    );
+
+    res.json({
+      success: true,
+      data: updatedMemberRole,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function handleRemoveWorkspaceMember(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const { workspaceId, userId } = workspaceMemberParamSchema.parse(
+      req.params,
+    );
+    const currentUser = req.user as AccessTokenPayload;
+
+    if (currentUser.userId === userId) {
+      throw new AppError("Use leave workspace endpoint instead of kick", 400);
+    }
+
+    await removeWorkspaceMember(workspaceId, userId);
+
+    res.json({
+      success: true,
+      message: "Successfully removed member",
     });
   } catch (error) {
     next(error);

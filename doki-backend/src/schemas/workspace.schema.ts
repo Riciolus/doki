@@ -1,5 +1,7 @@
 import z from "zod";
+import { Role } from "../../generated/prisma/enums";
 
+// WORKSPACE VALIDATION
 export const createWorkspaceSchema = z.object({
   name: z
     .string({
@@ -31,6 +33,7 @@ export const workspaceIdParamSchema = z.object({
 export type CreateWorkspaceInput = z.infer<typeof createWorkspaceSchema>;
 export type UpdateWorkspaceInput = z.infer<typeof updateWorkspaceSchema>;
 
+// CREATE INVITATION AND JOIN INVITATION VALIDATION
 export const createInvitationSchema = z.object({
   email: z.string().email("Invalid email format").optional(), // Opsional!
   role: z.enum(["OWNER", "EDITOR", "VIEWER"]).default("VIEWER"),
@@ -42,3 +45,22 @@ export const joinWorkspaceSchema = z.object({
 
 export type CreateInvitationInput = z.infer<typeof createInvitationSchema>;
 export type JoinWorkspaceInput = z.infer<typeof joinWorkspaceSchema>;
+
+// MEMBER MANAGEMENT VALIDATION
+
+export const workspaceMemberParamSchema = z.object({
+  workspaceId: z.string().uuid("Invalid workspace ID"),
+  userId: z.string().uuid("Invalid user ID"),
+});
+
+export const updateMemberRoleSchema = z.object({
+  role: z.enum(Role, {
+    error: (issue) =>
+      issue.input === undefined ? "Role is required" : "Role must be a enum",
+  }),
+});
+
+export type WorkspaceMemberParamInput = z.infer<
+  typeof workspaceMemberParamSchema
+>;
+export type UpdateMemberRoleInput = z.infer<typeof updateMemberRoleSchema>;

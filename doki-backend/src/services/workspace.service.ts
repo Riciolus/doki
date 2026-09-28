@@ -2,6 +2,7 @@ import { Role } from "../../generated/prisma/enums";
 import { prisma } from "../lib/prisma";
 import {
   CreateInvitationInput,
+  UpdateMemberRoleInput,
   UpdateWorkspaceInput,
 } from "../schemas/workspace.schema";
 
@@ -175,5 +176,60 @@ export async function joinWorkspaceAndInvalidateToken(
     });
 
     return newMember;
+  });
+}
+
+export async function getWorkspaceMembers(workspaceId: string) {
+  return await prisma.workspaceMember.findMany({
+    where: { workspaceId },
+    select: {
+      id: true,
+      role: true,
+      joinedAt: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+    },
+  });
+}
+
+export async function updateWorkspaceMemberRole(
+  workspaceId: string,
+  userId: string,
+  payload: UpdateMemberRoleInput,
+) {
+  return await prisma.workspaceMember.update({
+    where: {
+      workspaceId_userId: {
+        workspaceId,
+        userId,
+      },
+    },
+
+    data: payload,
+    select: {
+      id: true,
+      role: true,
+      userId: true,
+      workspaceId: true,
+    },
+  });
+}
+
+export async function removeWorkspaceMember(
+  workspaceId: string,
+  userId: string,
+) {
+  return await prisma.workspaceMember.delete({
+    where: {
+      workspaceId_userId: {
+        workspaceId,
+        userId,
+      },
+    },
   });
 }

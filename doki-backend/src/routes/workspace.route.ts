@@ -4,8 +4,11 @@ import {
   handleCreateWorkspace,
   handleDeleteWorkspace,
   handleGetWorkspaceById,
+  handleGetWorkspaceMembers,
   handleGetWorkspaces,
   handleJoinWorkspace,
+  handleRemoveWorkspaceMember,
+  handleUpdateMemberRole,
   handleUpdateWorkspace,
 } from "../controllers/workspace.controller";
 import { authenticate } from "../middlewares/auth.middleware";
@@ -48,5 +51,21 @@ router.post(
 );
 
 router.post("/join", authenticate, handleJoinWorkspace);
+
+router.get(
+  "/:workspaceId/members",
+  authorizeWorkspaceRole([Role.OWNER, Role.EDITOR, Role.VIEWER]),
+  handleGetWorkspaceMembers,
+);
+router.patch(
+  "/:workspaceId/members/:userId",
+  authorizeWorkspaceRole([Role.OWNER]),
+  handleUpdateMemberRole,
+);
+router.delete(
+  "/:workspaceId/members/:userId",
+  authorizeWorkspaceRole([Role.OWNER]),
+  handleRemoveWorkspaceMember,
+);
 
 export default router;
