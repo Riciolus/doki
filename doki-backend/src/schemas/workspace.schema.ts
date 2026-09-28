@@ -29,4 +29,4 @@ export const workspaceIdParamSchema = z.object({
 });
 
 export type CreateWorkspaceInput = z.infer<typeof createWorkspaceSchema>;
-export type UpadteWorkspaceInput = z.infer<typeof updateWorkspaceSchema>;
+export type UpdateWorkspaceInput = z.infer<typeof updateWorkspaceSchema>;

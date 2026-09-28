@@ -1,9 +1,14 @@
 import { Router } from "express";
 import {
   handleCreateWorkspace,
+  handleDeleteWorkspace,
+  handleGetWorkspaceById,
   handleGetWorkspaces,
+  handleUpdateWorkspace,
 } from "../controllers/workspace.controller";
 import { authenticate } from "../middlewares/auth.middleware";
+import { authorizeWorkspaceRole } from "../middlewares/rbac.middleware";
+import { Role } from "../../generated/prisma/enums";
 
 const router = Router();
 
@@ -11,5 +16,20 @@ router.use(authenticate);
 
 router.post("/", handleCreateWorkspace);
 router.get("/", handleGetWorkspaces);
+router.get(
+  "/:workspaceId",
+  authorizeWorkspaceRole([Role.OWNER, Role.EDITOR, Role.VIEWER]),
+  handleGetWorkspaceById,
+);
+router.patch(
+  "/:workspaceId",
+  authorizeWorkspaceRole([Role.OWNER]),
+  handleUpdateWorkspace,
+);
+router.delete(
+  ":workspaceId",
+  authorizeWorkspaceRole([Role.OWNER]),
+  handleDeleteWorkspace,
+);
 
 export default router;
