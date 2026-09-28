@@ -17,6 +17,17 @@ export async function createBoard(
   });
 }
 
+export async function getWorkspaceBoards(workspaceId: string) {
+  return await prisma.board.findMany({
+    where: {
+      workspaceId,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+}
+
 export async function getBoardById(boardId: string) {
   const board = await prisma.board.findUnique({
     where: {

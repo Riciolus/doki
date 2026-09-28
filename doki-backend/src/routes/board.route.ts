@@ -7,6 +7,7 @@ import {
 import { Role } from "../../generated/prisma/enums";
 import { authorizeBoardRole } from "../middlewares/rbac.middleware";
 import { authenticate } from "../middlewares/auth.middleware";
+import { handleCreateList } from "../controllers/list.controller";
 
 const router = Router();
 
@@ -26,6 +27,12 @@ router.delete(
   "/:boardId",
   authorizeBoardRole([Role.OWNER, Role.EDITOR]),
   handleDeleteBoard,
+);
+
+router.post(
+  "/:boardId/lists",
+  authorizeBoardRole([Role.OWNER, Role.EDITOR]),
+  handleCreateList,
 );
 
 export default router;

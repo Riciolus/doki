@@ -8,6 +8,7 @@ import {
   createBoard,
   deleteBoard,
   getBoardById,
+  getWorkspaceBoards,
   updateBoard,
 } from "../services/board.service";
 import { workspaceIdParamSchema } from "../schemas/workspace.schema";
@@ -26,6 +27,25 @@ export async function handleCreateBoard(
     res.status(201).json({
       success: true,
       data: newBoard,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function handleGetWorkspaceBoards(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const { workspaceId } = workspaceIdParamSchema.parse(req.params);
+
+    const boards = await getWorkspaceBoards(workspaceId);
+
+    res.json({
+      success: true,
+      data: boards,
     });
   } catch (error) {
     next(error);
