@@ -6,6 +6,7 @@ import { AccessTokenPayload } from "../lib/token";
 import { workspaceIdParamSchema } from "../schemas/workspace.schema";
 import { boardIdParamSchema } from "../schemas/board.schema";
 import { listIdParamSchema } from "../schemas/list.schema";
+import { taskIdParamSchema } from "../schemas/task.schema";
 
 export function authorizeWorkspaceRole(allowedRoles: Role[]) {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -133,6 +134,65 @@ export function authorizeListRole(allowedRoles: Role[]) {
         where: {
           workspaceId_userId: {
             workspaceId: list.board.workspaceId,
+            userId: userId,
+          },
+        },
+      });
+
+      if (!member) {
+        throw new AppError("You are not a member of this workspace", 403);
+      }
+
+      if (!allowedRoles.includes(member.role)) {
+        throw new AppError(
+          "You do not have permission to perform this action",
+          403,
+        );
+      }
+
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+}
+
+export function authorizeTaskRole(allowedRoles: Role[]) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = req.user as AccessTokenPayload;
+
+      if (!userId) {
+        throw new AppError("Unauthorized", 401);
+      }
+
+      const { taskId } = taskIdParamSchema.parse(req.params);
+
+      const task = await prisma.task.findUnique({
+        where: {
+          id: taskId,
+        },
+        select: {
+          list: {
+            select: {
+              board: {
+                select: {
+                  workspaceId: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!task) {
+        throw new AppError("Task not found", 404);
+      }
+
+      const member = await prisma.workspaceMember.findUnique({
+        where: {
+          workspaceId_userId: {
+            workspaceId: task.list.board.workspaceId,
             userId: userId,
           },
         },

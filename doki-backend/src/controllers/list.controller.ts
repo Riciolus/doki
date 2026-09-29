@@ -64,7 +64,7 @@ export async function handleReorderList(
 
     const updatedList = await reorderList(listId, payload);
 
-    res.status(200).json({
+    res.status(20).json({
       success: true,
       data: updatedList,
     });

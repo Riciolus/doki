@@ -7,6 +7,7 @@ import authRouter from "./routes/auth.route";
 import workspaceRouter from "./routes/workspace.route";
 import boardRouter from "./routes/board.route";
 import listRouter from "./routes/list.route";
+import taskRouter from "./routes/task.route";
 
 import { requestLogger } from "./middlewares/requestLogger.middleware";
 
@@ -39,6 +40,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/workspaces", workspaceRouter);
 app.use("/api/boards", boardRouter);
 app.use("/api/lists", listRouter);
+app.use("/api/tasks", taskRouter);
 
 // Global Error Handling
 app.use(GlobalErrorHandling);
