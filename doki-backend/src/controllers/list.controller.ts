@@ -1,7 +1,17 @@
 import { type NextFunction, type Request, type Response } from "express";
 import { boardIdParamSchema } from "../schemas/board.schema";
-import { createListSchema } from "../schemas/list.schema";
-import { createList } from "../services/list.service";
+import {
+  createListSchema,
+  listIdParamSchema,
+  reorderListSchema,
+  updateListSchema,
+} from "../schemas/list.schema";
+import {
+  createList,
+  deleteList,
+  reorderList,
+  updateList,
+} from "../services/list.service";
 
 export async function handleCreateList(
   req: Request,
@@ -29,6 +39,15 @@ export async function handleUpdateList(
   next: NextFunction,
 ) {
   try {
+    const { listId } = listIdParamSchema.parse(req.params);
+    const payload = updateListSchema.parse(req.body);
+
+    const updatedList = await updateList(listId, payload);
+
+    res.status(200).json({
+      success: true,
+      data: updatedList,
+    });
   } catch (error) {
     next(error);
   }
@@ -40,6 +59,15 @@ export async function handleReorderList(
   next: NextFunction,
 ) {
   try {
+    const { listId } = listIdParamSchema.parse(req.params);
+    const payload = reorderListSchema.parse(req.body);
+
+    const updatedList = await reorderList(listId, payload);
+
+    res.status(200).json({
+      success: true,
+      data: updatedList,
+    });
   } catch (error) {
     next(error);
   }
@@ -51,6 +79,14 @@ export async function handleDeleteList(
   next: NextFunction,
 ) {
   try {
+    const { listId } = listIdParamSchema.parse(req.params);
+
+    await deleteList(listId);
+
+    res.status(200).json({
+      success: true,
+      message: "List deleted successfully",
+    });
   } catch (error) {
     next(error);
   }
