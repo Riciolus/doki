@@ -8,6 +8,10 @@ import {
   handleUpdateTask,
 } from "../controllers/task.controller";
 import { authenticate } from "../middlewares/auth.middleware";
+import {
+  handleCreateComment,
+  handleGetComments,
+} from "../controllers/comment.controller";
 
 const router = Router();
 
@@ -35,6 +39,19 @@ router.delete(
   "/:taskId",
   authorizeTaskRole([Role.OWNER, Role.EDITOR]),
   handleDeleteTask,
+);
+
+// Comment
+router.get(
+  "/:taskId/comment",
+  authorizeTaskRole([Role.OWNER, Role.EDITOR, Role.VIEWER]),
+  handleGetComments,
+);
+
+router.post(
+  "/:taskId/comment",
+  authorizeTaskRole([Role.OWNER, Role.EDITOR, Role.VIEWER]),
+  handleCreateComment,
 );
 
 export default router;
