@@ -8,11 +8,10 @@ import workspaceRouter from "./routes/workspace.route";
 import boardRouter from "./routes/board.route";
 import listRouter from "./routes/list.route";
 import taskRouter from "./routes/task.route";
-
-import { Server } from "socket.io";
-
 import { requestLogger } from "./middlewares/requestLogger.middleware";
 import { createServer } from "node:http";
+import { Server } from "socket.io";
+import { socketAuthenticate } from "./middlewares/socketAuth.middleware";
 
 dotenv.config();
 
@@ -35,16 +34,20 @@ export const io = new Server(httpServer, {
 
 app.use(requestLogger);
 
+io.use(socketAuthenticate);
+
 io.on("connection", (socket) => {
-  console.log(`Client connected: ${socket.id}`);
+  console.log(
+    `Client connected: ${socket.id} (User ID: ${socket.data.user?.id})`,
+  );
 
   socket.on("join_board", ({ boardId }: { boardId: string }) => {
     socket.join("board:" + boardId);
     console.log(`Socket ${socket.id} joined room board:${boardId}`);
   });
 
-  socket.on("disconnect", () => {
-    console.log(`Client disconnected: ${socket.id}`);
+  socket.on("disconnect", (reason) => {
+    console.log(`Client disconnected: ${socket.id}, reason: ${reason}`);
   });
 });
 
