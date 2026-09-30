@@ -21,6 +21,13 @@ export async function createTask(
 
   return await prisma.task.create({
     data: { ...payload, orderIndex: idx, createdById: userId, listId },
+    include: {
+      list: {
+        select: {
+          boardId: true,
+        },
+      },
+    },
   });
 }
 
@@ -56,12 +63,22 @@ export async function reorderTask(taskId: string, payload: ReorderTaskInput) {
   return await prisma.task.update({
     where: { id: taskId },
     data: {
-      listId: payload.targetListId ?? existingTask.id,
+      listId: payload.targetListId ?? existingTask.listId,
       orderIndex: newOrderIndex,
+    },
+    include: {
+      list: {
+        select: {
+          boardId: true,
+        },
+      },
     },
   });
 }
 
 export async function deleteTask(taskId: string) {
-  return await prisma.task.delete({ where: { id: taskId } });
+  return await prisma.task.delete({
+    where: { id: taskId },
+    select: { list: { select: { boardId: true } } },
+  });
 }

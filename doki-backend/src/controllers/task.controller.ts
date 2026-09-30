@@ -14,6 +14,7 @@ import {
   updateTaskSchema,
 } from "../schemas/task.schema";
 import { AccessTokenPayload } from "../lib/token";
+import { io } from "../server";
 
 export async function handleCreateTask(
   req: Request,
@@ -26,10 +27,13 @@ export async function handleCreateTask(
     const payload = createTaskSchema.parse(req.body);
 
     const newTask = await createTask(listId, userId, payload);
+    const { list, ...taskData } = newTask;
+
+    io.to(`board:${list.boardId}`).emit("card_created", taskData);
 
     res.status(201).json({
       success: true,
-      data: newTask,
+      data: taskData,
     });
   } catch (error) {
     next(error);
@@ -86,6 +90,12 @@ export async function handleReorderTask(
 
     const updatedTask = await reorderTask(taskId, payload);
 
+    io.to(`board:${updatedTask.list.boardId}`).emit("card_moved", {
+      taskId: updatedTask.id,
+      targetListId: updatedTask.listId,
+      newOrderIndex: updatedTask.orderIndex,
+    });
+
     res.status(200).json({
       success: true,
       data: updatedTask,
@@ -103,7 +113,12 @@ export async function handleDeleteTask(
   try {
     const { taskId } = taskIdParamSchema.parse(req.params);
 
-    await deleteTask(taskId);
+    const { list } = await deleteTask(taskId);
+
+    io.to(`board:${list.boardId}`).emit("card_deleted", {
+      taskId,
+      boardId: list.boardId,
+    });
 
     res.status(200).json({
       success: true,

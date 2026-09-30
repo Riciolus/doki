@@ -12,6 +12,7 @@ import { requestLogger } from "./middlewares/requestLogger.middleware";
 import { createServer } from "node:http";
 import { Server } from "socket.io";
 import { socketAuthenticate } from "./middlewares/socketAuth.middleware";
+import { registerBoardSocketHandlers } from "./sockets/board.socket";
 
 dotenv.config();
 
@@ -41,14 +42,7 @@ io.on("connection", (socket) => {
     `Client connected: ${socket.id} (User ID: ${socket.data.user?.id})`,
   );
 
-  socket.on("join_board", ({ boardId }: { boardId: string }) => {
-    socket.join("board:" + boardId);
-    console.log(`Socket ${socket.id} joined room board:${boardId}`);
-  });
-
-  socket.on("disconnect", (reason) => {
-    console.log(`Client disconnected: ${socket.id}, reason: ${reason}`);
-  });
+  registerBoardSocketHandlers(io, socket);
 });
 
 // Health Check

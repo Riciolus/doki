@@ -12,6 +12,7 @@ import {
   reorderList,
   updateList,
 } from "../services/list.service";
+import { io } from "../server";
 
 export async function handleCreateList(
   req: Request,
@@ -23,6 +24,8 @@ export async function handleCreateList(
     const payload = createListSchema.parse(req.body);
 
     const list = await createList(boardId, payload);
+
+    io.to(`board:${list.boardId}`).emit("list_created", list);
 
     res.status(201).json({
       success: true,
@@ -64,7 +67,13 @@ export async function handleReorderList(
 
     const updatedList = await reorderList(listId, payload);
 
-    res.status(20).json({
+    io.to(`board:${updatedList.boardId}`).emit("list_moved", {
+      listId,
+      boardId: updatedList.boardId,
+      newOrderIndex: updatedList.orderIndex,
+    });
+
+    res.status(200).json({
       success: true,
       data: updatedList,
     });
