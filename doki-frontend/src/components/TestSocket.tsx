@@ -1,9 +1,7 @@
-"use client";
-
 import { socket } from "@/lib/socket";
 import { useEffect } from "react";
 
-export default function Home() {
+export default function TestSocket() {
   useEffect(() => {
     const handleConnect = () => {
       socket.emit("join_board", { boardId: "123" });
@@ -28,7 +26,5 @@ export default function Home() {
     };
   }, []);
 
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black"></div>
-  );
+  return <div>testing</div>;
 }
