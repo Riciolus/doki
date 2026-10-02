@@ -1,7 +1,7 @@
-import { AuthShell } from "@/components/auth-form";
+import { LoginForm } from "@/components/auth/login-form";
 
-export default function RegisterPage() {
-  return <AuthShell mode="login" />;
+export default function LoginPage() {
+  return <LoginForm />;
 }
 
 export const metadata = {
