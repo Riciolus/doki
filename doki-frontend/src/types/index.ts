@@ -25,10 +25,3 @@ export interface Workspace {
   name: string;
   boards: Board[];
 }
-
-export interface User {
-  id: string;
-  name: string;
-  avatar: string;
-  role: "owner" | "editor" | "viewer";
-}

@@ -6,8 +6,19 @@ export const authService = {
     const response = await api.post("/auth/register", payload);
     return response.data;
   },
+
   login: async (payload: LoginInput) => {
     const response = await api.post("/auth/login", payload);
+    return response.data;
+  },
+
+  logout: async () => {
+    const response = await api.post("/auth/logout");
+    return response.data;
+  },
+
+  getMe: async () => {
+    const response = await api.get("/auth/me");
     return response.data;
   },
 };
