@@ -1,149 +1,206 @@
-import type { Task, Board, Workspace, User } from "@/types";
-
-export const mockWorkspaces: Workspace[] = [
-  {
-    id: "ws-1",
-    name: "Acme Corp",
-    boards: [
-      { id: "board-1", title: "Sprint Board Q3", description: "Q3 planning" },
-      {
-        id: "board-2",
-        title: "Product Roadmap",
-        description: "Product planning",
-      },
-      { id: "board-3", title: "Bug Triage", description: "Bug tracking" },
-    ],
-  },
-];
+// src/mocks/data.ts
+import type {
+  Workspace,
+  Board,
+  List,
+  Task,
+  User,
+  WorkspaceMember,
+} from "@/types";
 
 export const mockUsers: User[] = [
   {
     id: "user-1",
     name: "Alex Chen",
-    avatar: "AC",
-    role: "owner",
+    email: "alex@acme.com",
   },
   {
     id: "user-2",
     name: "Jordan Lee",
-    avatar: "JL",
-    role: "editor",
+    email: "jordan@acme.com",
   },
   {
     id: "user-3",
     name: "Sam Rivera",
-    avatar: "SR",
-    role: "editor",
+    email: "sam@acme.com",
+  },
+];
+
+export const mockWorkspaceMembers: WorkspaceMember[] = [
+  {
+    id: "wm-1",
+    workspaceId: "ws-1",
+    userId: "user-1",
+    role: "OWNER",
+    user: mockUsers[0],
+  },
+  {
+    id: "wm-2",
+    workspaceId: "ws-1",
+    userId: "user-2",
+    role: "EDITOR",
+    user: mockUsers[1],
+  },
+  {
+    id: "wm-3",
+    workspaceId: "ws-1",
+    userId: "user-3",
+    role: "EDITOR",
+    user: mockUsers[2],
   },
 ];
 
 export const mockTasks: Task[] = [
-  // To Do
+  // To Do List Tasks
   {
     id: "task-1",
+    listId: "list-todo",
+    createdById: "user-1",
     title: "Design new landing page",
-    snippet: "Create responsive design mockups",
-    status: "todo",
-    priority: "high",
+    description: "Create responsive design mockups in Figma",
+    orderIndex: "a0",
+    priority: "HIGH",
+    assigneeId: "user-1",
     assignee: mockUsers[0],
-    dueDate: "2025-10-15",
-    comments: 3,
-    tags: ["design"],
+    dueDate: "2026-10-15T00:00:00.000Z",
   },
   {
     id: "task-2",
+    listId: "list-todo",
+    createdById: "user-2",
     title: "Set up database schema",
-    snippet: "PostgreSQL migrations",
-    status: "todo",
-    priority: "urgent",
+    description: "PostgreSQL migrations with Prisma",
+    orderIndex: "a1",
+    priority: "URGENT",
+    assigneeId: "user-2",
     assignee: mockUsers[1],
-    dueDate: "2025-10-10",
-    comments: 5,
-    tags: ["backend"],
+    dueDate: "2026-10-10T00:00:00.000Z",
   },
   {
     id: "task-3",
+    listId: "list-todo",
+    createdById: "user-1",
     title: "Write API documentation",
-    status: "todo",
-    priority: "medium",
-    dueDate: "2025-10-20",
-    comments: 0,
-    tags: ["documentation"],
+    description: null,
+    orderIndex: "a2",
+    priority: "MEDIUM",
+    assigneeId: null,
+    assignee: null,
+    dueDate: "2026-10-20T00:00:00.000Z",
   },
 
-  // In Progress
+  // In Progress List Tasks
   {
     id: "task-4",
+    listId: "list-inprogress",
+    createdById: "user-1",
     title: "Implement authentication flow",
-    snippet: "OAuth integration with GitHub",
-    status: "inprogress",
-    priority: "high",
+    description: "OAuth integration with GitHub and JWT refresh tokens",
+    orderIndex: "a0",
+    priority: "HIGH",
+    assigneeId: "user-3",
     assignee: mockUsers[2],
-    dueDate: "2025-10-12",
-    comments: 8,
-    tags: ["backend", "security"],
+    dueDate: "2026-10-12T00:00:00.000Z",
   },
   {
     id: "task-5",
+    listId: "list-inprogress",
+    createdById: "user-2",
     title: "Build dashboard UI components",
-    status: "inprogress",
-    priority: "high",
+    description: null,
+    orderIndex: "a1",
+    priority: "HIGH",
+    assigneeId: "user-1",
     assignee: mockUsers[0],
-    dueDate: "2025-10-14",
-    comments: 2,
-    tags: ["frontend"],
-  },
-  {
-    id: "task-6",
-    title: "Performance optimization",
-    snippet: "Reduce bundle size by 20%",
-    status: "inprogress",
-    priority: "medium",
-    comments: 4,
+    dueDate: "2026-10-14T00:00:00.000Z",
   },
 
-  // In Review
+  // In Review List Tasks
   {
     id: "task-7",
+    listId: "list-inreview",
+    createdById: "user-2",
     title: "Payment integration",
-    snippet: "Stripe checkout implementation",
-    status: "inreview",
-    priority: "urgent",
+    description: "Stripe checkout implementation",
+    orderIndex: "a0",
+    priority: "URGENT",
+    assigneeId: "user-2",
     assignee: mockUsers[1],
-    dueDate: "2025-10-11",
-    comments: 12,
-    tags: ["payments"],
-  },
-  {
-    id: "task-8",
-    title: "Email notification system",
-    status: "inreview",
-    priority: "medium",
-    assignee: mockUsers[2],
-    comments: 6,
-    tags: ["backend"],
+    dueDate: "2026-10-11T00:00:00.000Z",
   },
 
-  // Done
+  // Done List Tasks
   {
     id: "task-9",
+    listId: "list-done",
+    createdById: "user-1",
     title: "Setup monitoring and alerts",
-    snippet: "Configured Sentry and DataDog",
-    status: "done",
-    priority: "high",
+    description: "Configured Sentry and DataDog",
+    orderIndex: "a0",
+    priority: "HIGH",
+    assigneeId: "user-1",
     assignee: mockUsers[0],
-    dueDate: "2025-10-05",
-    comments: 1,
-    tags: ["devops"],
-  },
-  {
-    id: "task-10",
-    title: "Migrate to TypeScript",
-    status: "done",
-    priority: "medium",
-    comments: 7,
-    tags: ["refactor"],
+    dueDate: "2026-10-05T00:00:00.000Z",
   },
 ];
 
-export const mockActiveUsers = [mockUsers[0], mockUsers[1], mockUsers[2]];
+export const mockLists: List[] = [
+  {
+    id: "list-todo",
+    boardId: "board-1",
+    title: "To Do",
+    orderIndex: "a0",
+    tasks: mockTasks.filter((t) => t.listId === "list-todo"),
+  },
+  {
+    id: "list-inprogress",
+    boardId: "board-1",
+    title: "In Progress",
+    orderIndex: "a1",
+    tasks: mockTasks.filter((t) => t.listId === "list-inprogress"),
+  },
+  {
+    id: "list-inreview",
+    boardId: "board-1",
+    title: "In Review",
+    orderIndex: "a2",
+    tasks: mockTasks.filter((t) => t.listId === "list-inreview"),
+  },
+  {
+    id: "list-done",
+    boardId: "board-1",
+    title: "Done",
+    orderIndex: "a3",
+    tasks: mockTasks.filter((t) => t.listId === "list-done"),
+  },
+];
+
+export const mockBoards: Board[] = [
+  {
+    id: "board-1",
+    workspaceId: "ws-1",
+    title: "Sprint Board Q3",
+    lists: mockLists,
+  },
+  {
+    id: "board-2",
+    workspaceId: "ws-1",
+    title: "Product Roadmap",
+  },
+  {
+    id: "board-3",
+    workspaceId: "ws-1",
+    title: "Bug Triage",
+  },
+];
+
+export const mockWorkspaces: Workspace[] = [
+  {
+    id: "ws-1",
+    name: "Acme Corp",
+    ownerId: "user-1",
+    owner: mockUsers[0],
+    members: mockWorkspaceMembers,
+    boards: mockBoards,
+  },
+];
