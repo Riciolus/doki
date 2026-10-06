@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import {
-  ChevronLeft,
   Search,
   Inbox,
   Settings,

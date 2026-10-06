@@ -1,7 +1,7 @@
 "use client";
 
 import { LoginInput, loginSchema } from "@/schemas/auth.schema";
-import { authService } from "@/services/auth.services";
+import { authService } from "@/services/auth.service";
 import { useAuthStore } from "@/stores/use-auth-store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AxiosError } from "axios";

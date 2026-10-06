@@ -32,14 +32,26 @@ export async function getUserWorkspaces(userId: string) {
     where: {
       userId,
     },
-
     include: {
       workspace: {
-        select: {
-          id: true,
-          name: true,
-          ownerId: true,
-          createdAt: true,
+        include: {
+          members: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                },
+              },
+            },
+          },
+          boards: {
+            select: {
+              id: true,
+              title: true,
+            },
+          },
         },
       },
     },
@@ -48,9 +60,11 @@ export async function getUserWorkspaces(userId: string) {
   return members.map((member) => ({
     id: member.workspace.id,
     name: member.workspace.name,
-    owner: member.workspace.ownerId,
+    ownerId: member.workspace.ownerId,
     role: member.role,
     joinedAt: member.joinedAt,
+    members: member.workspace.members,
+    boards: member.workspace.boards,
   }));
 }
 

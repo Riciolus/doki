@@ -10,56 +10,34 @@ export interface User {
   createdAt?: string;
 }
 
+export interface RefreshToken {
+  id: string;
+  token: string;
+  userId: string;
+  expiresAt: string;
+  createdAt?: string;
+  user?: User;
+}
+
 export interface WorkspaceMember {
   id: string;
   workspaceId: string;
   userId: string;
   role: Role;
   joinedAt?: string;
+  workspace?: Workspace;
   user?: User;
 }
 
-export interface Comment {
-  id: string;
-  taskId: string;
-  userId: string;
-  content: string;
-  createdAt?: string;
-  user?: User;
-}
-
-export interface Task {
-  id: string;
-  listId: string;
-  createdById: string;
-  title: string;
-  description?: string | null;
-  orderIndex: string; // Fractional Indexing
-  priority: Priority;
-  dueDate?: string | null;
-  assigneeId?: string | null;
-  assignee?: User | null;
-  creator?: User;
-  comments?: Comment[];
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface List {
-  id: string;
-  boardId: string;
-  title: string;
-  orderIndex: string; // Fractional Indexing
-  createdAt?: string;
-  tasks?: Task[];
-}
-
-export interface Board {
+export interface WorkspaceInvitation {
   id: string;
   workspaceId: string;
-  title: string;
+  email?: string | null;
+  token: string;
+  role: Role;
+  expiresAt: string;
   createdAt?: string;
-  lists?: List[];
+  workspace?: Workspace;
 }
 
 export interface Workspace {
@@ -70,4 +48,64 @@ export interface Workspace {
   owner?: User;
   members?: WorkspaceMember[];
   boards?: Board[];
+  invitations?: WorkspaceInvitation[];
+}
+
+export interface Board {
+  id: string;
+  workspaceId: string;
+  title: string;
+  createdAt?: string;
+  workspace?: Workspace;
+  lists?: List[];
+  activities?: ActivityLog[];
+}
+
+export interface List {
+  id: string;
+  boardId: string;
+  title: string;
+  orderIndex: string; // String Fractional Indexing
+  createdAt?: string;
+  board?: Board;
+  tasks?: Task[];
+}
+
+export interface Comment {
+  id: string;
+  taskId: string;
+  userId: string;
+  content: string;
+  createdAt?: string;
+  task?: Task;
+  user?: User;
+}
+
+export interface Task {
+  id: string; // UUID dibuat di client untuk Optimistic UI
+  listId: string;
+  createdById: string;
+  title: string;
+  description?: string | null;
+  orderIndex: string; // String Fractional Indexing
+  createdAt?: string;
+  updatedAt?: string;
+  dueDate?: string | null;
+  priority: Priority;
+  assigneeId?: string | null;
+  list?: List;
+  creator?: User;
+  assignee?: User | null;
+  comments?: Comment[];
+}
+
+export interface ActivityLog {
+  id: string;
+  boardId: string;
+  userId: string;
+  action: string;
+  detail: string;
+  createdAt?: string;
+  board?: Board;
+  user?: User;
 }

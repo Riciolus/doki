@@ -1,4 +1,4 @@
-import { authService } from "@/services/auth.services";
+import { authService } from "@/services/auth.service";
 import { User } from "@/types/auth.type";
 import { create } from "zustand";
 
