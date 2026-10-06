@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import {
   Archive,
   CalendarDays,
-  Check,
   ChevronDown,
   ChevronRight,
   CircleHelp,
@@ -17,13 +17,15 @@ import {
   Sparkles,
   Users,
   X,
+  Check,
 } from "lucide-react";
-import TaskCard, { type Card } from "@/components/workspaces/task-card";
+
 import Avatar from "@/components/workspaces/avatar";
+import type { Task } from "@/types";
+import { useBoardStore } from "@/stores/use-board-store";
+import TaskCard from "@/components/workspaces/task-card";
 
 type Role = "OWNER" | "EDITOR" | "VIEWER";
-
-type Column = { id: string; title: string; tone: string; cards: Card[] };
 
 const avatars = [
   { initials: "MA", color: "bg-[#d8c5ff]" },
@@ -31,166 +33,77 @@ const avatars = [
   { initials: "SL", color: "bg-[#ffd4b8]" },
 ];
 
-const initialColumns: Column[] = [
-  {
-    id: "todo",
-    title: "To Do",
-    tone: "bg-[#c7c7c2]",
-    cards: [
-      {
-        id: 1,
-        title: "Audit empty states across product",
-        note: "Document gaps and propose a consistent pattern.",
-        tag: "Design",
-        tagTone: "bg-[#e9ddff] text-[#6d4aa2]",
-        assignee: "MA",
-        comments: 3,
-        date: "Aug 12",
-      },
-      {
-        id: 2,
-        title: "Define keyboard shortcuts",
-        tag: "Product",
-        tagTone: "bg-[#d9e8ff] text-[#4a6594]",
-        assignee: "JK",
-        comments: 1,
-        date: "Aug 14",
-      },
-      {
-        id: 3,
-        title: "Research export formats",
-        tag: "Research",
-        tagTone: "bg-[#ffe4ad] text-[#8a641e]",
-        assignee: "SL",
-        comments: 0,
-        date: "Aug 16",
-      },
-    ],
-  },
-  {
-    id: "progress",
-    title: "In Progress",
-    tone: "bg-[#e7b84b]",
-    cards: [
-      {
-        id: 4,
-        title: "Build presence indicators",
-        note: "Show who is active without adding visual noise.",
-        tag: "Frontend",
-        tagTone: "bg-[#d9e8ff] text-[#4a6594]",
-        assignee: "JK",
-        comments: 6,
-        date: "Aug 09",
-      },
-      {
-        id: 5,
-        title: "Create invite flow",
-        tag: "Core",
-        tagTone: "bg-[#ffdcd5] text-[#a54f42]",
-        assignee: "MA",
-        comments: 4,
-        date: "Aug 11",
-      },
-    ],
-  },
-  {
-    id: "review",
-    title: "In Review",
-    tone: "bg-[#9e72dc]",
-    cards: [
-      {
-        id: 6,
-        title: "Workspace navigation v2",
-        note: "Tighten hierarchy and make board switching faster.",
-        tag: "Design",
-        tagTone: "bg-[#e9ddff] text-[#6d4aa2]",
-        assignee: "SL",
-        comments: 8,
-        date: "Aug 07",
-      },
-      {
-        id: 7,
-        title: "Realtime sync error states",
-        tag: "Frontend",
-        tagTone: "bg-[#d9e8ff] text-[#4a6594]",
-        assignee: "JK",
-        comments: 2,
-        date: "Aug 08",
-      },
-    ],
-  },
-  {
-    id: "done",
-    title: "Done",
-    tone: "bg-[#56ad79]",
-    cards: [
-      {
-        id: 8,
-        title: "Set up board permissions",
-        tag: "Core",
-        tagTone: "bg-[#ffdcd5] text-[#a54f42]",
-        assignee: "MA",
-        comments: 5,
-        date: "Aug 02",
-      },
-      {
-        id: 9,
-        title: "Define visual language",
-        tag: "Design",
-        tagTone: "bg-[#e9ddff] text-[#6d4aa2]",
-        assignee: "SL",
-        comments: 11,
-        date: "Aug 03",
-      },
-    ],
-  },
-];
+export default function BoardPage() {
+  const params = useParams();
+  const boardId = params.boardId as string;
 
-export default function Page() {
-  const [dark, setDark] = useState(true);
+  // Zustand Store
+  const { currentBoard, fetchBoardById, createList, createTask, isLoading } =
+    useBoardStore();
+
+  // Local State UI
   const [role, setRole] = useState<Role>("OWNER");
-  const [columns, setColumns] = useState(initialColumns);
-  const [selected, setSelected] = useState<Card | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [newListName, setNewListName] = useState("");
+  const [isAddingList, setIsAddingList] = useState(false);
+
   const canEdit = role !== "VIEWER";
-  const addCard = (columnId: string) => {
-    if (!canEdit) return;
-    setColumns((items) =>
-      items.map((column) =>
-        column.id === columnId
-          ? {
-              ...column,
-              cards: [
-                ...column.cards,
-                {
-                  id: Date.now(),
-                  title: "Untitled task",
-                  tag: "New",
-                  tagTone: "bg-[#e9e9e7] text-[#6b6a67]",
-                  assignee: "AR",
-                  comments: 0,
-                  date: "Today",
-                },
-              ],
-            }
-          : column,
-      ),
-    );
+
+  // Fetch Data Board saat pertama kali load
+  useEffect(() => {
+    if (boardId) {
+      fetchBoardById(boardId);
+    }
+  }, [boardId, fetchBoardById]);
+
+  // Handler Tambah List
+  const handleCreateList = async () => {
+    if (!newListName.trim() || !boardId) return;
+    await createList(boardId, { title: newListName.trim() });
+    setNewListName("");
+    setIsAddingList(false);
   };
+
+  // Handler Tambah Task Cepat
+  const handleCreateTask = async (listId: string) => {
+    if (!canEdit) return;
+    await createTask(listId, {
+      id: crypto.randomUUID(), // Or v4() from the 'uuid' package
+      title: "Untitled task",
+    });
+  };
+
+  if (isLoading && !currentBoard) {
+    return (
+      <div className="flex h-screen items-center justify-center text-sm text-[#9b9a97]">
+        Loading Board...
+      </div>
+    );
+  }
+
+  // Hitung total task di seluruh list
+  const totalTasks =
+    currentBoard?.lists?.reduce(
+      (sum, list) => sum + (list.tasks?.length || 0),
+      0,
+    ) || 0;
 
   return (
     <>
       <main className="doki-shell flex h-screen min-w-[1100px] overflow-hidden bg-[#fbfbfb] font-sans text-[#37352f] dark:bg-[#191919] dark:text-[#e9e9e7]">
         <section className="flex min-w-0 flex-1 flex-col">
+          {/* Top Bar Header */}
           <header className="flex h-16 shrink-0 items-center gap-5 border-b border-[#e9e9e7] bg-white px-6 dark:border-[#2f2f2f] dark:bg-[#191919]">
             <div className="flex min-w-[300px] items-center gap-2 text-sm text-[#9b9a97]">
-              <span>Acme</span>
+              <span>Workspace</span>
               <ChevronRight className="size-4" />
-              <span className="text-[#37352f] dark:text-[#e9e9e7]">
-                Sprint Board Q3
+              <span className="font-medium text-[#37352f] dark:text-[#e9e9e7]">
+                {currentBoard?.title || "Board"}
               </span>
             </div>
+
             <div className="flex flex-1 items-center justify-center">
               <div className="flex items-center gap-2">
                 <div className="flex -space-x-2">
@@ -204,16 +117,18 @@ export default function Page() {
                 </span>
               </div>
             </div>
+
             <div className="flex items-center gap-3">
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value as Role)}
                 className="h-8 rounded border border-[#e9e9e7] bg-transparent px-2 text-xs font-semibold tracking-wide outline-none dark:border-[#3a3a3a]"
               >
-                <option>OWNER</option>
-                <option>EDITOR</option>
-                <option>VIEWER</option>
+                <option value="OWNER">OWNER</option>
+                <option value="EDITOR">EDITOR</option>
+                <option value="VIEWER">VIEWER</option>
               </select>
+
               {canEdit && (
                 <button
                   onClick={() => setInviteOpen(true)}
@@ -223,6 +138,7 @@ export default function Page() {
                   Invite
                 </button>
               )}
+
               <button
                 className="rounded p-2 text-[#9b9a97] hover:bg-black/5"
                 aria-label="Help"
@@ -231,24 +147,29 @@ export default function Page() {
               </button>
             </div>
           </header>
+
+          {/* Banner Read-Only */}
           {role === "VIEWER" && (
             <div className="flex h-9 shrink-0 items-center justify-center gap-2 border-b border-[#e4d6b5] bg-[#fff7e5] text-xs text-[#8a641e] dark:border-[#594d35] dark:bg-[#302a1d] dark:text-[#e7c87c]">
               <Archive className="size-4" />
               Viewing in Read-Only mode · Editing is disabled
             </div>
           )}
+
+          {/* Board Title Header */}
           <div className="flex h-24 shrink-0 items-center justify-between border-b border-[#e9e9e7] px-7 dark:border-[#2f2f2f]">
             <div>
               <div className="mb-1 flex items-center gap-2 text-xs text-[#9b9a97]">
                 <span className="rounded bg-[#f1f1ef] px-2 py-1 dark:bg-[#292929]">
-                  Q3 · 2024
+                  Active Board
                 </span>
-                <span>Last edited 2m ago</span>
+                <span>Updated live</span>
               </div>
               <h1 className="text-2xl font-semibold tracking-[-0.02em]">
-                Sprint Board Q3
+                {currentBoard?.title || "Board Overview"}
               </h1>
             </div>
+
             <div className="flex items-center gap-3">
               <button className="flex items-center gap-1.5 rounded-lg border border-[#e9e9e7] px-3 py-2 text-xs text-[#6b6a67] hover:bg-[#f1f1ef] dark:border-[#3a3a3a] dark:text-[#aaa] dark:hover:bg-[#292929]">
                 <Sparkles className="size-4" />
@@ -262,61 +183,65 @@ export default function Page() {
               </button>
             </div>
           </div>
+
+          {/* Main Board View */}
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <div className="flex items-center justify-between px-7 py-3">
               <div className="flex items-center gap-2 text-xs text-[#9b9a97]">
                 <span className="font-medium text-[#6b6a67] dark:text-[#aaa]">
-                  {columns.reduce(
-                    (sum, column) => sum + column.cards.length,
-                    0,
-                  )}{" "}
-                  tasks
+                  {totalTasks} tasks
                 </span>
                 <span>·</span>
                 <span>Updated live</span>
                 <span className="inline-flex size-2 rounded-full bg-[#50a878]" />
               </div>
+
               <button className="flex items-center gap-1.5 text-xs text-[#9b9a97] hover:text-[#37352f] dark:hover:text-[#e9e9e7]">
                 <Menu className="size-4" />
                 Filter & sort <ChevronDown className="size-4" />
               </button>
             </div>
+
+            {/* Column / List Container */}
             <div className="flex min-h-0 flex-1 gap-4 overflow-x-auto px-7 pb-7">
-              {columns.map((column) => (
+              {currentBoard?.lists?.map((list) => (
                 <section
-                  key={column.id}
+                  key={list.id}
                   className="flex min-w-[300px] max-w-[350px] flex-1 flex-col rounded-xl bg-[#f7f7f5] p-3 dark:bg-[#202020]"
                 >
                   <div className="flex items-center gap-2 px-1 pb-3">
-                    <span className={`size-2.5 rounded-full ${column.tone}`} />
-                    <h2 className="text-sm font-semibold">{column.title}</h2>
+                    <span className="size-2.5 rounded-full bg-[#c7c7c2]" />
+                    <h2 className="text-sm font-semibold">{list.title}</h2>
                     <span className="rounded bg-[#e9e9e7] px-2 py-0.5 text-xs text-[#6b6a67] dark:bg-[#2f2f2f] dark:text-[#aaa]">
-                      {column.cards.length}
+                      {list.tasks?.length || 0}
                     </span>
                     <div className="ml-auto flex items-center gap-1 text-[#9b9a97]">
                       <button
                         className="rounded p-1 hover:bg-black/5"
-                        aria-label={`Add card to ${column.title}`}
-                        onClick={() => addCard(column.id)}
+                        aria-label={`Add card to ${list.title}`}
+                        onClick={() => handleCreateTask(list.id)}
                       >
                         <Plus className="size-4" />
                       </button>
                       <MoreHorizontal className="size-4" />
                     </div>
                   </div>
+
+                  {/* List Item Cards */}
                   <div className="flex flex-col gap-3 overflow-y-auto">
-                    {column.cards.map((card) => (
+                    {list.tasks?.map((task) => (
                       <TaskCard
-                        key={card.id}
-                        card={card}
+                        key={task.id}
+                        task={task}
                         canEdit={canEdit}
-                        onClick={() => setSelected(card)}
+                        onClick={() => setSelectedTask(task)}
                       />
                     ))}
                   </div>
+
                   {canEdit && (
                     <button
-                      onClick={() => addCard(column.id)}
+                      onClick={() => handleCreateTask(list.id)}
                       className="mt-3 flex items-center gap-1.5 rounded px-1.5 py-1.5 text-xs text-[#9b9a97] hover:bg-black/5"
                     >
                       <Plus className="size-4" />
@@ -325,14 +250,59 @@ export default function Page() {
                   )}
                 </section>
               ))}
+
+              {/* Action untuk Tambah List/Kolom Baru */}
+              {canEdit && (
+                <div className="min-w-[280px]">
+                  {isAddingList ? (
+                    <div className="flex flex-col gap-2 rounded-xl bg-[#f7f7f5] p-3 dark:bg-[#202020]">
+                      <input
+                        type="text"
+                        placeholder="Enter list title..."
+                        value={newListName}
+                        onChange={(e) => setNewListName(e.target.value)}
+                        className="rounded border border-[#e9e9e7] bg-white p-2 text-sm outline-none dark:border-[#3a3a3a] dark:bg-[#191919]"
+                        autoFocus
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleCreateList()
+                        }
+                      />
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handleCreateList}
+                          className="rounded bg-[#37352f] px-3 py-1.5 text-xs text-white dark:bg-[#e9e9e7] dark:text-[#37352f]"
+                        >
+                          Add List
+                        </button>
+                        <button
+                          onClick={() => setIsAddingList(false)}
+                          className="rounded p-1.5 text-xs text-[#9b9a97]"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setIsAddingList(true)}
+                      className="flex w-full items-center gap-2 rounded-xl border border-dashed border-[#e9e9e7] p-3 text-xs font-medium text-[#9b9a97] hover:bg-[#f7f7f5] dark:border-[#2f2f2f] dark:hover:bg-[#202020]"
+                    >
+                      <Plus className="size-4" />
+                      Add Column
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </section>
       </main>
-      {selected && (
+
+      {/* Task Detail Drawer */}
+      {selectedTask && (
         <div
           className="fixed inset-0 z-20 bg-black/15"
-          onClick={() => setSelected(null)}
+          onClick={() => setSelectedTask(null)}
         >
           <aside
             className="absolute right-0 top-0 flex h-full w-[440px] flex-col border-l border-[#e9e9e7] bg-white shadow-xl dark:border-[#2f2f2f] dark:bg-[#202020]"
@@ -340,71 +310,65 @@ export default function Page() {
           >
             <div className="flex items-center justify-between border-b border-[#e9e9e7] px-5 py-4 dark:border-[#2f2f2f]">
               <span className="text-xs text-[#9b9a97]">
-                TASK-{String(selected.id).padStart(3, "0")}
+                TASK-{selectedTask.id.slice(0, 6).toUpperCase()}
               </span>
               <button
-                onClick={() => setSelected(null)}
+                onClick={() => setSelectedTask(null)}
                 className="rounded p-1 text-[#9b9a97] hover:bg-black/5"
                 aria-label="Close task details"
               >
                 <X className="size-5" />
               </button>
             </div>
+
             <div className="flex-1 overflow-y-auto p-6">
               <h2 className="text-2xl font-semibold leading-7">
-                {selected.title}
+                {selectedTask.title}
               </h2>
               <p className="mt-3 text-sm leading-6 text-[#6b6a67] dark:text-[#aaa]">
-                {selected.note ??
-                  "A focused task in the Sprint Board Q3 workspace. Keep the scope clear and share updates as the work moves forward."}
+                {selectedTask.description || "No description provided."}
               </p>
+
               <div className="mt-6 grid grid-cols-2 gap-4 border-y border-[#e9e9e7] py-4 text-sm dark:border-[#2f2f2f]">
                 <div>
-                  <p className="text-xs text-[#9b9a97]">Status</p>
-                  <p className="mt-1.5 font-medium">
-                    In Progress <ChevronDown className="ml-1 inline size-4" />
+                  <p className="text-xs text-[#9b9a97]">Priority</p>
+                  <p className="mt-1.5 font-medium uppercase">
+                    {selectedTask.priority || "MEDIUM"}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-[#9b9a97]">Assignee</p>
                   <p className="mt-1.5 flex items-center gap-1.5 font-medium">
-                    <Avatar initials={selected.assignee} small />
-                    {selected.assignee}
+                    {selectedTask.assignee ? (
+                      <>
+                        <Avatar
+                          initials={selectedTask.assignee.name.slice(0, 2)}
+                          small
+                        />
+                        {selectedTask.assignee.name}
+                      </>
+                    ) : (
+                      "Unassigned"
+                    )}
                   </p>
-                </div>
-                <div>
-                  <p className="text-xs text-[#9b9a97]">Priority</p>
-                  <p className="mt-1.5 font-medium">High</p>
                 </div>
                 <div>
                   <p className="text-xs text-[#9b9a97]">Due date</p>
                   <p className="mt-1.5 flex items-center gap-1.5 font-medium">
                     <CalendarDays className="size-4" />
-                    {selected.date}
+                    {selectedTask.dueDate
+                      ? new Date(selectedTask.dueDate).toLocaleDateString()
+                      : "No due date"}
                   </p>
                 </div>
               </div>
-              <h3 className="mt-6 text-sm font-semibold">Description</h3>
-              <p className="mt-2 text-sm leading-6 text-[#6b6a67] dark:text-[#aaa]">
-                Collaborate with the team to bring this work across the finish
-                line. Keep decisions documented here so everyone has the same
-                context.
-              </p>
+
               <h3 className="mt-7 flex items-center gap-2 text-sm font-semibold">
                 <MessageSquare className="size-4" />
-                Comments{" "}
-                <span className="font-normal text-[#9b9a97]">
-                  {selected.comments}
-                </span>
+                Comments
               </h3>
-              <div className="mt-4 flex gap-2.5">
-                <Avatar initials="MA" color="bg-[#d8c5ff]" small />
-                <div className="rounded-lg bg-[#f7f7f5] px-3 py-2.5 text-sm leading-5 dark:bg-[#292929]">
-                  Looks good from my side. Let&apos;s keep the interaction
-                  compact.
-                </div>
-              </div>
             </div>
+
             <div className="border-t border-[#e9e9e7] p-4 dark:border-[#2f2f2f]">
               <div className="flex items-center gap-2 rounded-lg border border-[#e9e9e7] px-3 py-2 dark:border-[#3a3a3a]">
                 <input
@@ -422,6 +386,8 @@ export default function Page() {
           </aside>
         </div>
       )}
+
+      {/* Invite Modal */}
       {inviteOpen && (
         <div
           className="fixed inset-0 z-30 flex items-center justify-center bg-black/25 p-4"
@@ -446,20 +412,22 @@ export default function Page() {
                 <X className="size-5" />
               </button>
             </div>
+
             <label className="mt-5 block text-xs font-medium text-[#6b6a67] dark:text-[#aaa]">
               Role
               <select className="mt-1.5 block h-10 w-full rounded-lg border border-[#e9e9e7] bg-transparent px-3 text-sm dark:border-[#3a3a3a]">
-                <option>EDITOR</option>
-                <option>VIEWER</option>
+                <option value="EDITOR">EDITOR</option>
+                <option value="VIEWER">VIEWER</option>
               </select>
             </label>
+
             <div className="mt-5">
               <p className="text-xs font-medium text-[#6b6a67] dark:text-[#aaa]">
                 Magic link
               </p>
               <div className="mt-1.5 flex items-center gap-2 rounded-lg border border-[#e9e9e7] p-2 dark:border-[#3a3a3a]">
                 <span className="min-w-0 flex-1 truncate font-mono text-xs text-[#9b9a97]">
-                  dok.i/acme/invite/7f2a9c
+                  doki.app/invite/7f2a9c
                 </span>
                 <button
                   onClick={() => {
@@ -477,6 +445,7 @@ export default function Page() {
                 </button>
               </div>
             </div>
+
             <button
               onClick={() => setInviteOpen(false)}
               className="mt-5 w-full rounded-lg bg-[#37352f] py-2.5 text-sm font-medium text-white dark:bg-[#e9e9e7] dark:text-[#37352f]"
