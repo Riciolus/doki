@@ -1,51 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import {
   Bell,
   ChevronRight,
   CircleHelp,
   ClipboardList,
   LayoutGrid,
+  Loader2,
   Plus,
-  Search,
   Settings,
   Users,
   X,
 } from "lucide-react";
+import { useBoardStore } from "@/stores/use-board-store";
 
 const members = [
   { initials: "MA", color: "bg-[#d8c5ff]" },
   { initials: "JK", color: "bg-[#bde7d3]" },
   { initials: "SL", color: "bg-[#ffd4b8]" },
   { initials: "AR", color: "bg-[#c9e1ff]" },
-];
-
-const initialBoards = [
-  {
-    id: "b-1",
-    name: "Sprint Board Q3",
-    description: "Plan, prioritize, and move work forward.",
-    updated: "Updated 2m ago",
-    members: 4,
-    icon: LayoutGrid,
-  },
-  {
-    id: "b-2",
-    name: "Product Roadmap",
-    description: "A shared view of what is coming next.",
-    updated: "Updated yesterday",
-    members: 3,
-    icon: ClipboardList,
-  },
-  {
-    id: "b-3",
-    name: "Bug Triage",
-    description: "Keep incoming issues clear and assigned.",
-    updated: "Updated 3d ago",
-    members: 2,
-    icon: ClipboardList,
-  },
 ];
 
 function Avatar({
@@ -69,38 +44,51 @@ function Avatar({
 }
 
 export default function WorkspaceDetailPage() {
-  const [boards, setBoards] = useState(initialBoards);
+  const params = useParams();
+  const router = useRouter();
+  const workspaceId = params.workspaceId as string;
+
+  // Zustand Store Integration
+  const { boards, fetchBoards, createBoard, isLoading, error } =
+    useBoardStore();
+
   const [modalOpen, setModalOpen] = useState(false);
   const [boardName, setBoardName] = useState("");
   const [boardDesc, setBoardDesc] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function createBoard() {
-    if (!boardName.trim()) return;
-    setBoards([
-      ...boards,
-      {
-        id: `b-${Date.now()}`,
-        name: boardName.trim(),
-        description: boardDesc.trim() || "No description provided.",
-        updated: "Created just now",
-        members: 1,
-        icon: LayoutGrid,
-      },
-    ]);
-    setBoardName("");
-    setBoardDesc("");
-    setModalOpen(false);
+  useEffect(() => {
+    if (workspaceId) {
+      fetchBoards(workspaceId);
+    }
+  }, [workspaceId, fetchBoards]);
+
+  async function handleCreateBoard(e: React.FormEvent) {
+    e.preventDefault();
+    if (!boardName.trim() || isSubmitting) return;
+
+    try {
+      setIsSubmitting(true);
+      await createBoard(workspaceId, {
+        title: boardName.trim(),
+      });
+      setBoardName("");
+      setBoardDesc("");
+      setModalOpen(false);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
     <section className="flex min-w-0 flex-1 flex-col">
-      {/* HEADER: Disamakan persis dengan Halaman Board */}
+      {/* HEADER */}
       <header className="flex h-16 shrink-0 items-center justify-between border-b border-[#e9e9e7] bg-white px-6 dark:border-[#2f2f2f] dark:bg-[#191919]">
         <div className="flex items-center gap-2 text-sm text-[#9b9a97]">
           <span>Workspaces</span>
           <ChevronRight className="size-4" />
           <span className="font-semibold text-[#37352f] dark:text-[#e9e9e7]">
-            Acme Corp
+            Workspace Details
           </span>
         </div>
         <div className="flex items-center gap-3">
@@ -111,13 +99,13 @@ export default function WorkspaceDetailPage() {
           </div>
           <span className="text-xs text-[#9b9a97]">4 members</span>
           <button
-            className="rounded p-2 text-[#9b9a97] hover:bg-black/5"
+            className="rounded p-2 text-[#9b9a97] hover:bg-black/5 dark:hover:bg-white/5"
             aria-label="Settings"
           >
             <Settings className="size-5" />
           </button>
           <button
-            className="rounded p-2 text-[#9b9a97] hover:bg-black/5"
+            className="rounded p-2 text-[#9b9a97] hover:bg-black/5 dark:hover:bg-white/5"
             aria-label="Help"
           >
             <CircleHelp className="size-5" />
@@ -132,10 +120,10 @@ export default function WorkspaceDetailPage() {
             <span className="rounded bg-[#f1f1ef] px-2 py-0.5 font-medium dark:bg-[#292929]">
               WORKSPACE
             </span>
-            <span>4 members · 3 boards</span>
+            <span>4 members · {boards.length} boards</span>
           </div>
           <h1 className="text-2xl font-semibold tracking-[-0.02em] text-[#37352f] dark:text-[#e9e9e7]">
-            Acme Corp
+            Workspace Overview
           </h1>
         </div>
         <div className="flex items-center gap-3">
@@ -151,61 +139,76 @@ export default function WorkspaceDetailPage() {
 
       {/* CONTENT: BOARD GRID LIST */}
       <div className="flex-1 overflow-y-auto px-7 py-6">
+        {error && (
+          <div className="mb-6 rounded-lg bg-red-500/10 p-4 text-xs font-medium text-red-600 dark:text-red-400">
+            {error}
+          </div>
+        )}
+
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-[#9b9a97]">
             All Boards ({boards.length})
           </h2>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          {boards.map((board) => {
-            const Icon = board.icon;
-            return (
+        {isLoading ? (
+          <div className="flex h-48 items-center justify-center text-xs text-[#9b9a97]">
+            <Loader2 className="mr-2 size-5 animate-spin" />
+            Loading boards...
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-4">
+            {boards.map((board) => (
               <article
                 key={board.id}
-                className="group flex flex-col justify-between rounded-xl border border-[#e9e9e7] bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,.03)] transition hover:border-[#c7c6c2] dark:border-[#2f2f2f] dark:bg-[#202020] dark:hover:border-[#4a4a4a]"
+                onClick={() =>
+                  router.push(`/workspaces/${workspaceId}/boards/${board.id}`)
+                }
+                className="group flex cursor-pointer flex-col justify-between rounded-xl border border-[#e9e9e7] bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,.03)] transition hover:border-[#c7c6c2] dark:border-[#2f2f2f] dark:bg-[#202020] dark:hover:border-[#4a4a4a]"
               >
                 <div>
                   <div className="flex items-center justify-between">
                     <span className="flex size-9 items-center justify-center rounded-lg bg-[#f7f7f5] text-[#37352f] dark:bg-[#292929] dark:text-[#e9e9e7]">
-                      <Icon className="size-5" />
+                      <LayoutGrid className="size-5" />
                     </span>
                     <span className="text-[11px] font-mono text-[#9b9a97]">
-                      {board.updated}
+                      {board.createdAt
+                        ? new Date(board.createdAt).toLocaleDateString()
+                        : "Recent"}
                     </span>
                   </div>
                   <h3 className="mt-3 text-base font-semibold text-[#37352f] dark:text-[#e9e9e7]">
-                    {board.name}
+                    {board.title}
                   </h3>
                   <p className="mt-1 line-clamp-2 text-xs text-[#9b9a97]">
-                    {board.description}
+                    Plan, prioritize, and move work forward.
                   </p>
                 </div>
 
                 <div className="mt-5 flex items-center justify-between border-t border-[#e9e9e7] pt-3 dark:border-[#2f2f2f]">
                   <div className="flex items-center gap-1.5 text-xs text-[#9b9a97]">
                     <Users className="size-3.5" />
-                    <span>{board.members} members</span>
+                    <span>4 members</span>
                   </div>
-                  <button className="text-xs font-medium text-[#6b6a67] opacity-0 transition group-hover:opacity-100 dark:text-[#aaa]">
+                  <span className="text-xs font-medium text-[#6b6a67] opacity-0 transition group-hover:opacity-100 dark:text-[#aaa]">
                     Open Board →
-                  </button>
+                  </span>
                 </div>
               </article>
-            );
-          })}
+            ))}
 
-          {/* DUMMY NEW BOARD BUTTON CARD */}
-          <button
-            onClick={() => setModalOpen(true)}
-            className="flex min-h-[160px] flex-col items-center justify-center rounded-xl border border-dashed border-[#c7c6c2] text-[#9b9a97] transition hover:border-[#9b9a97] hover:bg-[#f7f7f5] dark:border-[#4a4a4a] dark:hover:bg-[#202020]"
-          >
-            <Plus className="size-5" />
-            <span className="mt-2 text-xs font-medium text-[#37352f] dark:text-[#e9e9e7]">
-              Create Board
-            </span>
-          </button>
-        </div>
+            {/* CREATE BOARD BUTTON CARD */}
+            <button
+              onClick={() => setModalOpen(true)}
+              className="flex min-h-[160px] flex-col items-center justify-center rounded-xl border border-dashed border-[#c7c6c2] text-[#9b9a97] transition hover:border-[#9b9a97] hover:bg-[#f7f7f5] dark:border-[#4a4a4a] dark:hover:bg-[#202020]"
+            >
+              <Plus className="size-5" />
+              <span className="mt-2 text-xs font-medium text-[#37352f] dark:text-[#e9e9e7]">
+                Create Board
+              </span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* CREATE BOARD MODAL */}
@@ -234,32 +237,38 @@ export default function WorkspaceDetailPage() {
                 <X className="size-5" />
               </button>
             </div>
-            <label className="mt-5 block text-xs font-medium text-[#6b6a67] dark:text-[#aaa]">
-              Board Title
-              <input
-                value={boardName}
-                onChange={(e) => setBoardName(e.target.value)}
-                autoFocus
-                className="mt-1.5 block h-10 w-full rounded-lg border border-[#e9e9e7] bg-transparent px-3 text-sm outline-none focus:border-[#9b9a97] dark:border-[#3a3a3a]"
-                placeholder="e.g. Q4 Marketing Campaign"
-              />
-            </label>
-            <label className="mt-4 block text-xs font-medium text-[#6b6a67] dark:text-[#aaa]">
-              Description (Optional)
-              <textarea
-                value={boardDesc}
-                onChange={(e) => setBoardDesc(e.target.value)}
-                className="mt-1.5 block min-h-[70px] w-full resize-none rounded-lg border border-[#e9e9e7] bg-transparent px-3 py-2 text-sm outline-none focus:border-[#9b9a97] dark:border-[#3a3a3a]"
-                placeholder="Briefly describe the board goal..."
-              />
-            </label>
-            <button
-              onClick={createBoard}
-              disabled={!boardName.trim()}
-              className="mt-5 w-full rounded-lg bg-[#37352f] py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-[#e9e9e7] dark:text-[#37352f]"
-            >
-              Create Board
-            </button>
+            <form onSubmit={handleCreateBoard}>
+              <label className="mt-5 block text-xs font-medium text-[#6b6a67] dark:text-[#aaa]">
+                Board Title
+                <input
+                  value={boardName}
+                  onChange={(e) => setBoardName(e.target.value)}
+                  autoFocus
+                  className="mt-1.5 block h-10 w-full rounded-lg border border-[#e9e9e7] bg-transparent px-3 text-sm text-[#37352f] outline-none focus:border-[#9b9a97] dark:border-[#3a3a3a] dark:text-[#e9e9e7]"
+                  placeholder="e.g. Q4 Marketing Campaign"
+                />
+              </label>
+              <label className="mt-4 block text-xs font-medium text-[#6b6a67] dark:text-[#aaa]">
+                Description (Optional)
+                <textarea
+                  value={boardDesc}
+                  onChange={(e) => setBoardDesc(e.target.value)}
+                  className="mt-1.5 block min-h-[70px] w-full resize-none rounded-lg border border-[#e9e9e7] bg-transparent px-3 py-2 text-sm text-[#37352f] outline-none focus:border-[#9b9a97] dark:border-[#3a3a3a] dark:text-[#e9e9e7]"
+                  placeholder="Briefly describe the board goal..."
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={!boardName.trim() || isSubmitting}
+                className="mt-5 flex w-full items-center justify-center rounded-lg bg-[#37352f] py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-[#e9e9e7] dark:text-[#37352f]"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  "Create Board"
+                )}
+              </button>
+            </form>
           </div>
         </div>
       )}

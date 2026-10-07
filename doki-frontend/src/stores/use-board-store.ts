@@ -1,3 +1,4 @@
+import { CreateBoardInput } from "@/schemas/board.schema";
 import { CreateListInput } from "@/schemas/list.schema";
 import { CreateTaskInput } from "@/schemas/task.schema";
 import { boardService } from "@/services/board.service";
@@ -9,11 +10,18 @@ import { create } from "zustand";
 
 interface BoardState {
   // state
+  boards: Board[];
   currentBoard: Board | null;
   isLoading: boolean;
   error: string | null;
 
   // actions
+  fetchBoards: (workspaceId: string) => Promise<void>;
+  createBoard: (
+    workspaceId: string,
+    payload: CreateBoardInput,
+  ) => Promise<void>;
+
   fetchBoardById: (id: string) => Promise<void>;
   createList: (boardId: string, payload: CreateListInput) => Promise<void>;
   createTask: (listId: string, payload: CreateTaskInput) => Promise<void>;
@@ -28,9 +36,45 @@ interface BoardState {
 }
 
 export const useBoardStore = create<BoardState>((set) => ({
+  boards: [],
   currentBoard: null,
   isLoading: true,
   error: null,
+
+  fetchBoards: async (workspaceId) => {
+    try {
+      set({ isLoading: true, error: null });
+      const response = await boardService.getBoards(workspaceId);
+      const boardsData = Array.isArray(response.data)
+        ? response.data
+        : response.data?.boards || [];
+
+      set({ isLoading: false, boards: boardsData });
+    } catch (error) {
+      const message =
+        error instanceof AxiosError
+          ? error.response?.data?.message || error.message
+          : "Failed to fetch boards";
+      set({ error: message, isLoading: false });
+    }
+  },
+
+  createBoard: async (workspaceId, payload) => {
+    try {
+      set({ isLoading: true, error: null });
+      const response = await boardService.createBoard(workspaceId, payload);
+      set((state) => ({
+        isLoading: false,
+        boards: [...state.boards, response.data],
+      }));
+    } catch (error) {
+      const message =
+        error instanceof AxiosError
+          ? error.response?.data?.message || error.message
+          : "Failed to create board";
+      set({ error: message, isLoading: false });
+    }
+  },
 
   fetchBoardById: async (id: string) => {
     try {
