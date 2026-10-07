@@ -14,7 +14,7 @@ export async function createTask(
 ) {
   const lastTask = await prisma.task.findFirst({
     where: { listId },
-    orderBy: { orderIndex: "desc" },
+    orderBy: [{ orderIndex: "asc" }, { id: "asc" }],
   });
 
   const idx = generateKeyBetween(lastTask?.orderIndex || null, null);
@@ -52,10 +52,33 @@ export async function updateTask(taskId: string, payload: UpdateTaskInput) {
 }
 
 export async function reorderTask(taskId: string, payload: ReorderTaskInput) {
-  const existingTask = await prisma.task.findUnique({ where: { id: taskId } });
+  const existingTask = await prisma.task.findUnique({
+    where: { id: taskId },
+    include: {
+      list: {
+        include: {
+          board: true,
+        },
+      },
+    },
+  });
 
   if (!existingTask) {
     throw new AppError("Task not found", 404);
+  }
+
+  if (payload.targetListId) {
+    const targetList = await prisma.list.findUnique({
+      where: { id: payload.targetListId },
+    });
+
+    if (!targetList) {
+      throw new AppError("Target list not found", 404);
+    }
+
+    if (targetList.boardId !== existingTask.list.boardId) {
+      throw new AppError("Target list does not belong to this board", 400);
+    }
   }
 
   const newOrderIndex = generateKeyBetween(

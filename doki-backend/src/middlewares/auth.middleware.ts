@@ -17,7 +17,14 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
     req.user = verified;
 
     next();
-  } catch (error) {
+  } catch (error: any) {
+    if (
+      error.name === "TokenExpiredError" ||
+      error.name === "NotBeforeError" ||
+      error.name === "JsonWebTokenError"
+    ) {
+      throw new AppError("Unauthorized", 401);
+    }
     next(error);
   }
 }

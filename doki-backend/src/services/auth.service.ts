@@ -109,7 +109,7 @@ export async function refreshSession(refreshToken: string) {
 }
 
 export async function getUserDetail(userId: string, email: string) {
-  return prisma.user.findFirst({
+  return await prisma.user.findFirst({
     where: {
       id: userId,
       email,
@@ -121,5 +121,11 @@ export async function getUserDetail(userId: string, email: string) {
       email: true,
       createdAt: true,
     },
+  });
+}
+
+export async function revokeSession(refreshToken: string) {
+  return await prisma.refreshToken.deleteMany({
+    where: { token: refreshToken },
   });
 }

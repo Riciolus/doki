@@ -9,7 +9,7 @@ import {
 export async function createList(boardId: string, payload: CreateListInput) {
   const lastList = await prisma.list.findFirst({
     where: { boardId },
-    orderBy: { orderIndex: "desc" },
+    orderBy: [{ orderIndex: "asc" }, { id: "asc" }],
   });
 
   const idx = generateKeyBetween(lastList?.orderIndex || null, null);

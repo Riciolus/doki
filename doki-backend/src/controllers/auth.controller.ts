@@ -5,6 +5,7 @@ import {
   loginUser,
   refreshSession,
   registerUser,
+  revokeSession,
 } from "../services/auth.service";
 import {
   AccessTokenPayload,
@@ -71,7 +72,14 @@ export async function handleRefreshSession(
       success: true,
       message: "Token refreshed successfully",
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (
+      error.name === "TokenExpiredError" ||
+      error.name === "NotBeforeError" ||
+      error.name === "JsonWebTokenError"
+    ) {
+      throw new AppError("Forbidden", 403);
+    }
     next(error);
   }
 }
@@ -82,6 +90,12 @@ export async function handleLogout(
   next: NextFunction,
 ) {
   try {
+    const refreshToken = req.cookies.jwt_refresh;
+
+    if (refreshToken) {
+      await revokeSession(refreshToken);
+    }
+
     clearAuthCookies(res);
 
     res.status(200).json({

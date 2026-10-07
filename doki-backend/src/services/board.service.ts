@@ -36,14 +36,10 @@ export async function getBoardById(boardId: string) {
 
     include: {
       lists: {
-        orderBy: {
-          orderIndex: "asc",
-        },
+        orderBy: [{ orderIndex: "asc" }, { id: "asc" }],
         include: {
           tasks: {
-            orderBy: {
-              orderIndex: "asc",
-            },
+            orderBy: [{ orderIndex: "asc" }, { id: "asc" }],
           },
         },
       },

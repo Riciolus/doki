@@ -4,7 +4,8 @@ import { CreateCommentInput } from "../schemas/comment.schema";
 export async function getComments(taskId: string) {
   return await prisma.comment.findMany({
     where: { taskId },
-    orderBy: { createdAt: "asc" },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+
     include: {
       user: {
         select: {
