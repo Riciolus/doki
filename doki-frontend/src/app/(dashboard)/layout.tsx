@@ -3,17 +3,23 @@
 import { useAuthStore } from "@/stores/use-auth-store";
 import { ReactNode, useEffect } from "react";
 import { Sidebar } from "@/components/workspaces/sidebar";
+import { useWorkspaceStore } from "@/stores/use-workspace-store";
 
 export default function WorkspaceLayout({ children }: { children: ReactNode }) {
   const checkAuth = useAuthStore((state) => state.checkAuth);
   const isLoading = useAuthStore((state) => state.isLoading);
+  const { fetchWorkspaces } = useWorkspaceStore();
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
+  useEffect(() => {
+    fetchWorkspaces();
+  }, [fetchWorkspaces]);
+
   if (isLoading) {
-    return null; // Return null lebih disukai daripada <></>
+    return null;
   }
 
   return (

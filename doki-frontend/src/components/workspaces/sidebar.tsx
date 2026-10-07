@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Search,
   Inbox,
@@ -8,60 +9,61 @@ import {
   Plus,
   LayoutGrid,
   ClipboardList,
-  Sun,
-  Moon,
   ChevronsUpDown,
   Building2,
 } from "lucide-react";
+import { ThemeSwitcher } from "../theme-switcher";
+import { useAuthStore } from "@/stores/use-auth-store";
+import { useWorkspaceStore } from "@/stores/use-workspace-store";
+import { useBoardStore } from "@/stores/use-board-store";
 
-interface Workspace {
-  id: string;
-  name: string;
-}
+export function Sidebar() {
+  const router = useRouter();
+  const { user, isLoading: isAuthLoading } = useAuthStore();
 
-interface Board {
-  id: string;
-  title: string;
-}
+  const { workspaces, currentWorkspace, setCurrentWorkspace } =
+    useWorkspaceStore();
 
-interface SidebarProps {
-  dark: boolean;
-  setDark: (value: boolean) => void;
-  workspaces?: Workspace[];
-  activeWorkspace?: Workspace;
-  boards?: Board[];
-  onSelectWorkspace?: (workspaceId: string) => void;
-  onSelectBoard?: (boardId: string) => void;
-}
+  const { boards, fetchBoards } = useBoardStore();
 
-export function Sidebar({
-  dark,
-  setDark,
-  workspaces = [{ id: "ws-1", name: "Acme Corp" }],
-  activeWorkspace = { id: "ws-1", name: "Acme Corp" },
-  boards = [
-    { id: "b-1", title: "Sprint Board Q3" },
-    { id: "b-2", title: "Product Roadmap" },
-  ],
-  onSelectWorkspace,
-  onSelectBoard,
-}: SidebarProps) {
   const [isWsOpen, setIsWsOpen] = useState(false);
 
+  useEffect(() => {
+    if (currentWorkspace?.id) {
+      fetchBoards(currentWorkspace.id);
+    }
+  }, [currentWorkspace?.id, fetchBoards]);
+
+  const getInitials = (name?: string) => {
+    if (!name) return "U";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2);
+  };
+
   return (
-    <aside className="flex w-[250px] shrink-0 flex-col border-r border-[#e9e9e7] bg-[#f7f7f5] p-3 text-[14px] dark:border-[#2f2f2f] dark:bg-[#191919]">
+    <aside className="flex w-62.5 shrink-0 flex-col border-r border-[#e9e9e7] bg-[#f7f7f5] p-3 text-[14px] dark:border-[#2f2f2f] dark:bg-[#191919]">
       {/* 1. WORKSPACE SWITCHER HEADER */}
       <div className="relative mb-2">
         <button
           onClick={() => setIsWsOpen(!isWsOpen)}
           className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 hover:bg-black/5 dark:hover:bg-white/5"
         >
-          <div className="flex items-center gap-2.5 font-semibold min-w-0">
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#37352f] text-xs font-bold text-white dark:bg-[#f1f1ef] dark:text-[#37352f]">
-              {activeWorkspace.name.substring(0, 2).toUpperCase()}
-            </span>
-            <span className="truncate text-[15px]">{activeWorkspace.name}</span>
-          </div>
+          {currentWorkspace ? (
+            <div className="flex items-center gap-2.5 font-semibold min-w-0">
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#37352f] text-xs font-bold text-white dark:bg-[#f1f1ef] dark:text-[#37352f]">
+                {currentWorkspace.name.substring(0, 2).toUpperCase()}
+              </span>
+              <span className="truncate text-[15px]">
+                {currentWorkspace.name}
+              </span>
+            </div>
+          ) : (
+            <span className="text-xs text-[#9b9a97]">Select Workspace</span>
+          )}
           <ChevronsUpDown className="size-4 shrink-0 text-[#9b9a97]" />
         </button>
 
@@ -75,11 +77,12 @@ export function Sidebar({
               <button
                 key={ws.id}
                 onClick={() => {
-                  onSelectWorkspace?.(ws.id);
+                  setCurrentWorkspace(ws);
+                  router.push(`/workspaces/${ws.id}`);
                   setIsWsOpen(false);
                 }}
                 className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs ${
-                  ws.id === activeWorkspace.id
+                  ws.id === currentWorkspace?.id
                     ? "bg-[#f7f7f5] font-medium text-black dark:bg-[#292929] dark:text-white"
                     : "text-[#6b6a67] hover:bg-black/5 dark:text-[#aaa] dark:hover:bg-white/5"
                 }`}
@@ -130,7 +133,11 @@ export function Sidebar({
             return (
               <button
                 key={board.id}
-                onClick={() => onSelectBoard?.(board.id)}
+                onClick={() =>
+                  router.push(
+                    `/workspaces/${currentWorkspace?.id}/boards/${board.id}`,
+                  )
+                }
                 className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[#6b6a67] hover:bg-black/5 dark:text-[#aaa] dark:hover:bg-white/5"
               >
                 <Icon className="size-4 shrink-0" />
@@ -142,24 +149,22 @@ export function Sidebar({
       </div>
 
       {/* 4. USER PROFILE & THEME TOGGLE */}
-      <div className="mt-auto border-t border-[#e9e9e7] pt-2 dark:border-[#2f2f2f]">
-        <div className="flex items-center gap-2.5 px-1 py-1">
-          <div className="flex size-7 items-center justify-center rounded-full bg-[#c9e1ff] text-xs font-semibold text-[#1e40af]">
-            AR
+      {!isAuthLoading && user && (
+        <div className="mt-auto border-t border-[#e9e9e7] pt-2 dark:border-[#2f2f2f]">
+          <div className="flex items-center gap-2.5 px-1 py-1">
+            <div className="flex size-7 items-center justify-center rounded-full bg-[#c9e1ff] text-xs font-semibold text-[#1e40af]">
+              {getInitials(user.name)}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-medium">{user.name}</p>
+              <p className="truncate text-[11px] text-[#9b9a97]">
+                {user.email}
+              </p>
+            </div>
+            <ThemeSwitcher />
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-medium">Alex Rivera</p>
-            <p className="truncate text-[11px] text-[#9b9a97]">alex@acme.co</p>
-          </div>
-          <button
-            onClick={() => setDark(!dark)}
-            className="rounded p-1.5 text-[#9b9a97] hover:bg-black/5 dark:hover:bg-white/5"
-            aria-label="Toggle dark mode"
-          >
-            {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
-          </button>
         </div>
-      </div>
+      )}
     </aside>
   );
 }

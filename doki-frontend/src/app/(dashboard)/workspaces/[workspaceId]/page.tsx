@@ -3,10 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
-  Bell,
   ChevronRight,
   CircleHelp,
-  ClipboardList,
   LayoutGrid,
   Loader2,
   Plus,
@@ -15,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { useBoardStore } from "@/stores/use-board-store";
+import { useWorkspaceStore } from "@/stores/use-workspace-store";
 
 const members = [
   { initials: "MA", color: "bg-[#d8c5ff]" },
@@ -46,17 +45,32 @@ function Avatar({
 export default function WorkspaceDetailPage() {
   const params = useParams();
   const router = useRouter();
+
+  // Menggunakan param nama folder rute Next.js ([workspaceId])
   const workspaceId = params.workspaceId as string;
 
   // Zustand Store Integration
   const { boards, fetchBoards, createBoard, isLoading, error } =
     useBoardStore();
+  const { workspaces, currentWorkspace, setCurrentWorkspace } =
+    useWorkspaceStore();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [boardName, setBoardName] = useState("");
   const [boardDesc, setBoardDesc] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Set current workspace aktif berdasarkan ID di URL
+  useEffect(() => {
+    if (workspaceId && workspaces.length > 0) {
+      const found = workspaces.find((ws) => ws.id === workspaceId);
+      if (found) {
+        setCurrentWorkspace(found);
+      }
+    }
+  }, [workspaceId, workspaces, setCurrentWorkspace]);
+
+  // Fetch boards milik workspace ini
   useEffect(() => {
     if (workspaceId) {
       fetchBoards(workspaceId);
@@ -71,6 +85,7 @@ export default function WorkspaceDetailPage() {
       setIsSubmitting(true);
       await createBoard(workspaceId, {
         title: boardName.trim(),
+        // description: boardDesc.trim() || undefined,
       });
       setBoardName("");
       setBoardDesc("");
@@ -88,7 +103,7 @@ export default function WorkspaceDetailPage() {
           <span>Workspaces</span>
           <ChevronRight className="size-4" />
           <span className="font-semibold text-[#37352f] dark:text-[#e9e9e7]">
-            Workspace Details
+            {currentWorkspace ? currentWorkspace.name : "Workspace Details"}
           </span>
         </div>
         <div className="flex items-center gap-3">
@@ -123,7 +138,7 @@ export default function WorkspaceDetailPage() {
             <span>4 members · {boards.length} boards</span>
           </div>
           <h1 className="text-2xl font-semibold tracking-[-0.02em] text-[#37352f] dark:text-[#e9e9e7]">
-            Workspace Overview
+            {currentWorkspace ? currentWorkspace.name : "Workspace Overview"}
           </h1>
         </div>
         <div className="flex items-center gap-3">
@@ -181,7 +196,9 @@ export default function WorkspaceDetailPage() {
                     {board.title}
                   </h3>
                   <p className="mt-1 line-clamp-2 text-xs text-[#9b9a97]">
+                    {/* {board.description || */}
                     Plan, prioritize, and move work forward.
+                    {/* } */}
                   </p>
                 </div>
 

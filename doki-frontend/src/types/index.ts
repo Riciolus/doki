@@ -58,6 +58,8 @@ export interface Board {
   createdAt?: string;
   workspace?: Workspace;
   lists?: List[];
+  //description belom ada, belom di implement di server. future work
+  // description?: string;
   activities?: ActivityLog[];
 }
 
