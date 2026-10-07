@@ -19,7 +19,7 @@ import { useBoardStore } from "@/stores/use-board-store";
 
 export function Sidebar() {
   const router = useRouter();
-  const { user, isLoading: isAuthLoading } = useAuthStore();
+  const { user, isLoading: isAuthLoading, logout } = useAuthStore();
 
   const { workspaces, currentWorkspace, setCurrentWorkspace } =
     useWorkspaceStore();
@@ -161,6 +161,12 @@ export function Sidebar() {
                 {user.email}
               </p>
             </div>
+            {/* next button is inside dropdown */}
+            <button
+              onClick={() => logout().finally(() => router.push("/login"))}
+            >
+              Logout
+            </button>
             <ThemeSwitcher />
           </div>
         </div>

@@ -4,10 +4,11 @@ import { useAuthStore } from "@/stores/use-auth-store";
 import { ReactNode, useEffect } from "react";
 import { Sidebar } from "@/components/workspaces/sidebar";
 import { useWorkspaceStore } from "@/stores/use-workspace-store";
+import { useRouter } from "next/navigation";
 
 export default function WorkspaceLayout({ children }: { children: ReactNode }) {
-  const checkAuth = useAuthStore((state) => state.checkAuth);
-  const isLoading = useAuthStore((state) => state.isLoading);
+  const router = useRouter();
+  const { checkAuth, isLoading, isAuthenticated } = useAuthStore();
   const { fetchWorkspaces } = useWorkspaceStore();
 
   useEffect(() => {
@@ -18,7 +19,13 @@ export default function WorkspaceLayout({ children }: { children: ReactNode }) {
     fetchWorkspaces();
   }, [fetchWorkspaces]);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isLoading, isAuthenticated, router]);
+
+  if (isLoading || !isAuthenticated) {
     return null;
   }
 
