@@ -19,7 +19,7 @@ router.patch(
   handleUpdateList,
 );
 router.patch(
-  "/:listId/reorder",
+  "/:listId/move",
   authorizeListRole([Role.OWNER, Role.EDITOR]),
   handleReorderList,
 );

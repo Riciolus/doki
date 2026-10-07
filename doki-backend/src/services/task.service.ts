@@ -32,7 +32,10 @@ export async function createTask(
 }
 
 export async function getTask(taskId: string) {
-  const task = await prisma.task.findUnique({ where: { id: taskId } });
+  const task = await prisma.task.findUnique({
+    where: { id: taskId },
+    include: { comments: { include: { user: true } } },
+  });
 
   if (!task) {
     throw new AppError("Task not found", 404);

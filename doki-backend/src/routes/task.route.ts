@@ -30,7 +30,7 @@ router.patch(
 );
 
 router.patch(
-  "/:taskId/reorder",
+  "/:taskId/move",
   authorizeTaskRole([Role.OWNER, Role.EDITOR]),
   handleReorderTask,
 );
@@ -43,13 +43,13 @@ router.delete(
 
 // Comment
 router.get(
-  "/:taskId/comment",
+  "/:taskId/comments",
   authorizeTaskRole([Role.OWNER, Role.EDITOR, Role.VIEWER]),
   handleGetComments,
 );
 
 router.post(
-  "/:taskId/comment",
+  "/:taskId/comments",
   authorizeTaskRole([Role.OWNER, Role.EDITOR, Role.VIEWER]),
   handleCreateComment,
 );

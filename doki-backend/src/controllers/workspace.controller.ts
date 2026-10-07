@@ -156,7 +156,9 @@ export async function handleCreateInvitation(
 
     res.status(201).json({
       success: true,
-      data: invitation,
+      data: {
+        inviteUrl: `${process.env.CLIENT_ORIGIN}/invite?token=${invitation.token}`,
+      },
     });
   } catch (error) {
     next(error);
